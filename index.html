@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>kör nokta</title>
+<meta name="description" content="polisin görmediği yerde bir suç işlendi. kurbanı ve katili saf mantıkla bul.">
+<meta property="og:title" content="kör nokta">
+<meta property="og:description" content="polisin görmediği yerde bir suç işlendi. kurbanı ve katili saf mantıkla bul.">
+<meta name="theme-color" content="#eceee9">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+/* tasarım: dedektif defteri. polisin göremediği yerler kalemle taranmış, tanığın bakışı kırmızı ip, kapanan dosyaya kırmızı damga. */
+:root{
+  --paper:#eceee9; --paper-2:#e3e6e0; --ink:#17191c; --ink-2:#3b4046; --pencil:#8a9096; --line:#c7ccc4;
+  --hatch:rgba(23,25,28,.26); --red:#cf3a2b; --red-soft:rgba(207,58,43,.12); --veil:rgba(236,238,233,.86);
+  --serif:"Instrument Serif","Iowan Old Style","Times New Roman",serif;
+  --sans:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:#121417; --paper-2:#1a1d21; --ink:#e9e7e1; --ink-2:#c3c1ba; --pencil:#7f858c; --line:#2c3035;
+  --hatch:rgba(233,231,225,.17); --red:#ff6553; --red-soft:rgba(255,101,83,.14); --veil:rgba(18,20,23,.86);
+  color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.55 var(--sans);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:3px}
+.wrap{max-width:520px;margin:0 auto;padding:0 max(20px,env(safe-area-inset-right,0px)) 56px max(20px,env(safe-area-inset-left,0px))}
+.num{font-variant-numeric:tabular-nums}
+.ico{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+/* üst */
+.top{display:flex;align-items:center;justify-content:space-between;padding:22px 0 18px}
+.mark{font:700 25px/1 var(--sans);letter-spacing:-.035em;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.mark b{width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;transform:translateY(2px)}
+.nav{display:flex;gap:2px}
+.nav button{width:38px;height:38px;display:grid;place-items:center;border-radius:8px;color:var(--ink-2)}
+.nav button:hover,.nav button[aria-current="true"]{color:var(--ink);background:var(--paper-2)}
+
+/* ana sayfa */
+.hero{display:grid;grid-template-columns:1fr 132px;gap:18px;align-items:end;padding:10px 0 26px;border-bottom:1px solid var(--line)}
+.hero h1{margin:0;font:700 40px/1.04 var(--sans);letter-spacing:-.035em;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--red)}
+.hero p{margin:14px 0 0;color:var(--ink-2);font-size:14.5px;max-width:34ch}
+.hero svg{width:132px;height:132px;display:block}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border-radius:999px;font-weight:600;font-size:14px;border:1px solid var(--line);background:transparent;color:var(--ink);transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--ink-2)}
+.btn.ink{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.ink:hover{background:var(--ink-2);border-color:var(--ink-2)}
+.btn:disabled{opacity:.35;cursor:default}
+.label{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--pencil);margin:30px 0 4px}
+.list{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;padding:14px 2px;border-bottom:1px solid var(--line)}
+.row:hover .t{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.row .n{font:italic 400 26px/1 var(--serif);color:var(--pencil)}
+.row.done .n{color:var(--red)}
+.row .t{font-weight:600;font-size:15px}
+.row .s{display:block;font-size:12.5px;color:var(--pencil);margin-top:1px}
+.row .r{font-size:12.5px;color:var(--pencil);text-align:right}
+.row.done .r{color:var(--ink-2)}
+.foot{margin-top:34px;font-size:12px;color:var(--pencil);text-align:center;text-wrap:balance}
+
+/* vaka */
+.meta{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:0 0 14px}
+.meta .who{min-width:0}
+.meta .k{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--pencil)}
+.meta h2{margin:2px 0 0;font:italic 400 34px/1 var(--serif);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta .side{display:flex;align-items:center;gap:12px}
+.timer{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.timer.run{color:var(--red)}
+.qbtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.qbtn:hover{border-color:var(--ink-2);color:var(--ink)}
+
+.stage{position:relative}
+#board{display:block;width:100%;height:auto;touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}
+#board .hatch{transition:opacity .55s ease}
+#board .hatch.clear{opacity:0}
+#board .pc{transition:opacity .5s ease}
+.pre #board .pc{opacity:0}
+.cover{position:absolute;inset:0;display:grid;place-items:center}
+.cover .card{background:var(--veil);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);padding:18px 22px;border-radius:16px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.cover p{margin:0;font-size:12.5px;color:var(--pencil)}
+.status{min-height:42px;margin:14px 0 0;font-size:14px;color:var(--ink-2);display:flex;gap:10px;align-items:flex-start}
+.status .dot{width:6px;height:6px;border-radius:50%;background:var(--pencil);margin-top:8px;flex:none}
+.status.warn{color:var(--red)} .status.warn .dot{background:var(--red)}
+.status.go{color:var(--ink)} .status.go .dot{background:var(--red)}
+.tools{display:flex;gap:8px;margin-top:10px;align-items:center}
+.tools .grow{flex:1}
+.tbtn{height:44px;min-width:44px;padding:0 12px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.tbtn:hover{border-color:var(--ink-2);color:var(--ink)}
+.tbtn:disabled{opacity:.35;cursor:default}
+.tbtn .c{font-weight:500;color:var(--pencil)}
+
+/* kurallar / nasıl */
+.rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.rules li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.rules li:last-child{border-bottom:0}
+.rules svg{width:44px;height:44px;display:block}
+.rules b{font-weight:600;color:var(--ink)}
+.rules span{font-size:14px;color:var(--ink-2)}
+.rules .new{display:inline-block;margin-left:6px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.how h1{margin:6px 0 6px;font:italic 400 40px/1 var(--serif)}
+.how .lead{margin:0 0 10px;color:var(--ink-2)}
+.how .demo{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:center;padding:18px 0;border-bottom:1px solid var(--line)}
+.how .demo svg{width:150px;height:150px;display:block}
+.how .demo h3{margin:0 0 4px;font:italic 400 24px/1 var(--serif)}
+.how .demo p{margin:0;font-size:14px;color:var(--ink-2)}
+.how .demo .no{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--pencil);display:block;margin-bottom:6px}
+.how .ctrl{padding:18px 0;color:var(--ink-2);font-size:14px}
+.how .ctrl b{color:var(--ink)}
+
+/* alt sayfa */
+.sheet-bg{position:fixed;inset:0;background:rgba(10,11,13,.38);display:grid;place-items:end center;z-index:20;padding:12px;animation:fade .2s ease}
+.sheet{width:100%;max-width:520px;max-height:calc(100% - 24px);overflow:auto;background:var(--paper);border-radius:20px;padding:22px 22px calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:up .28s cubic-bezier(.2,.8,.2,1)}
+.sheet h3{margin:0;font:italic 400 32px/1 var(--serif)}
+.sheet p{margin:0;color:var(--ink-2);font-size:14.5px}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line);align-self:center;margin:-8px 0 2px}
+.stats{display:flex;gap:28px}
+.stats div{display:flex;flex-direction:column;font-size:12px;color:var(--pencil)}
+.stats b{font:italic 400 36px/1 var(--serif);color:var(--ink)}
+.share{font-size:13px;background:var(--paper-2);border-radius:12px;padding:12px 14px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink-2);user-select:all}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acts .grow{flex:1}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:999px;font-weight:600;font-size:13.5px;z-index:30;max-width:calc(100% - 32px);text-align:center;animation:up .2s ease}
+
+/* çizim animasyonları */
+.draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .45s ease forwards}
+.stamp{transform-box:fill-box;transform-origin:center;animation:stamp .5s cubic-bezier(.2,1.4,.4,1) .15s both}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes stamp{from{opacity:0;transform:rotate(-9deg) scale(1.9)}to{opacity:1;transform:rotate(-9deg) scale(1)}}
+@keyframes up{from{transform:translateY(14px);opacity:0}}
+@keyframes fade{from{opacity:0}}
+@media (max-width:420px){.hero{grid-template-columns:1fr 92px;gap:14px}.hero h1{font-size:33px}.hero svg{width:92px;height:92px}}
+@media (max-width:360px){.how .demo{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.draw{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6M12 17h.01"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+    <symbol id="i-erase" viewBox="0 0 24 24"><path d="M19 20H8.5l-4.2-4.3a1 1 0 0 1 0-1.4L14 4.6a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4L11 20"/><path d="M9 9l6 6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+  </defs>
+</svg>
+<div class="wrap">
+  <header class="top">
+    <a class="mark" href="#" id="homeLink" aria-label="kör nokta">kör<b aria-hidden="true"></b>nokta</a>
+    <nav class="nav" aria-label="menü">
+      <button type="button" id="navCases" title="vakalar" aria-label="vakalar"><svg class="ico"><use href="#i-list"/></svg></button>
+      <button type="button" id="navHow" title="nasıl oynanır" aria-label="nasıl oynanır"><svg class="ico"><use href="#i-help"/></svg></button>
+    </nav>
+  </header>
+
+  <section id="vHome" hidden>
+    <div class="hero">
+      <div>
+        <h1>polisin görmediği yerde bir suç <em>işlendi.</em></h1>
+        <p>kurban taralı karelerden birinde. tanıkları dinle, katili bul. tahmin yok, sadece mantık.</p>
+      </div>
+      <div id="heroArt"></div>
+    </div>
+    <div class="cta"><button class="btn ink" type="button" id="ctaStart">ilk vakayı aç</button><button class="btn" type="button" id="ctaHow">nasıl oynanır</button></div>
+    <div class="label">dosyalar</div>
+    <ul class="list" id="caseList"></ul>
+    <p class="foot">deneme sürümü. her vakanın tek bir çözümü var ve bilgisayar bunu tek tek doğruladı.</p>
+  </section>
+
+  <section id="vHow" class="how" hidden></section>
+
+  <section id="vCase" hidden>
+    <div class="meta">
+      <div class="who"><div class="k" id="cK">vaka 01</div><h2 id="cTitle"></h2></div>
+      <div class="side"><span class="timer num" id="sTime">0:00</span><button class="qbtn" type="button" id="rulesBtn" aria-label="kurallar"><svg class="ico"><use href="#i-help"/></svg></button></div>
+    </div>
+    <div class="stage pre" id="stage">
+      <svg id="board" role="img" aria-label="olay yeri"></svg>
+      <div class="cover" id="cover"><div class="card"><button class="btn ink" type="button" id="startBtn">dosyayı aç</button><p>süre dosyayı açınca başlar</p></div></div>
+    </div>
+    <div class="status" id="status" aria-live="polite"><span class="dot"></span><span id="statusTxt"></span></div>
+    <div class="tools">
+      <button class="btn ink grow" type="button" id="accuseBtn" disabled>suçla</button>
+      <button class="tbtn" type="button" id="hintBtn" aria-label="ipucu"><svg class="ico"><use href="#i-bulb"/></svg><span class="c num" id="hintC">3</span></button>
+      <button class="tbtn" type="button" id="undoBtn" aria-label="geri al"><svg class="ico"><use href="#i-undo"/></svg></button>
+      <button class="tbtn" type="button" id="clearBtn" aria-label="temizle"><svg class="ico"><use href="#i-erase"/></svg></button>
+    </div>
+  </section>
+</div>
+
+<div class="sheet-bg" id="sheetBg" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="cases.js"></script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const CASES=window.KN_CASES||[];
+const L='ABCDEFGH';
+const SITE=/^https?:/.test(location.protocol)?location.origin+location.pathname:'kerem-sahin.github.io/kor-nokta/';
+const cheb=(a,b)=>Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]));
+const pad=n=>String(n).padStart(2,'0');
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+const U=100;
+
+/* ---------- kayıt ---------- */
+function load(){try{return JSON.parse(localStorage.getItem('kn_v2')||'{}')}catch(e){return{}}}
+function save(){try{localStorage.setItem('kn_v2',JSON.stringify(store))}catch(e){}}
+const store=load();
+
+/* ---------- çizim parçaları (100 birimlik kare) ---------- */
+function star(cx,cy,r){let p='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;p+=(i?'L':'M')+(cx+rr*Math.cos(a)).toFixed(1)+' '+(cy+rr*Math.sin(a)).toFixed(1)}return p+'Z'}
+const P={
+  police:(x,y)=>`<path d="${star(x,y,27)}" style="fill:var(--ink)"/>`,
+  sus:(x,y,l,inn)=>`<g${inn?' opacity=".38"':''}><circle cx="${x}" cy="${y}" r="27" style="fill:var(--paper);stroke:var(--ink);stroke-width:3.5"/><text x="${x}" y="${y+12}" text-anchor="middle" style="font:italic 400 36px var(--serif);fill:var(--ink)">${l}</text>${inn?`<path d="M${x-30} ${y+18} L${x+30} ${y-18}" style="stroke:var(--ink);stroke-width:3.5;stroke-linecap:round"/>`:''}</g>`,
+  witOk:(x,y,d)=>{const a=Math.atan2(d[0],d[1])*180/Math.PI;return `<g><rect x="${x-28}" y="${y-28}" width="56" height="56" rx="10" style="fill:var(--paper);stroke:var(--ink);stroke-width:3"/><g transform="rotate(${a} ${x} ${y})"><path d="M${x-15} ${y} H${x+15} M${x+5} ${y-10} L${x+16} ${y} L${x+5} ${y+10}" style="fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round"/></g></g>`},
+  witNum:(x,y,n)=>`<g><rect x="${x-28}" y="${y-28}" width="56" height="56" rx="10" style="fill:var(--paper);stroke:var(--ink);stroke-width:3;stroke-dasharray:7 5"/><text x="${x}" y="${y+13}" text-anchor="middle" style="font:600 34px var(--sans);fill:var(--ink)">${n}</text></g>`,
+  x:(x,y)=>`<path class="draw" style="--len:60;stroke:var(--pencil);stroke-width:5;stroke-linecap:round;fill:none" d="M${x-14} ${y-15} Q${x} ${y-1} ${x+15} ${y+14} M${x+14} ${y-14} Q${x-1} ${y+1} ${x-15} ${y+15}"/>`,
+  victim:(x,y)=>`<g><circle cx="${x}" cy="${y}" r="22" style="fill:var(--red)"/><circle class="draw" cx="${x}" cy="${y}" r="33" style="--len:210;fill:none;stroke:var(--red);stroke-width:2.5"/></g>`,
+  ring:(x,y)=>`<circle class="draw" cx="${x}" cy="${y}" r="40" style="--len:260;fill:none;stroke:var(--red);stroke-width:4" transform="rotate(-90 ${x} ${y})"/>`,
+};
+
+function boardSVG(c,opt){
+  // opt: {marks, innocent, hl, pick, done, pre, mini}
+  const N=c.N,S=N*U,o=opt||{};
+  const lit=p=>c.police.some(q=>cheb(p,q)<=1);
+  const at=(arr,r,cc)=>arr.findIndex(p=>p[0]===r&&p[1]===cc);
+  const pid=`h${o.mini?'m'+o.mini:''}`;
+  let h=`<defs><pattern id="${pid}" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="14" style="stroke:var(--hatch);stroke-width:${o.mini?3.4:2.6}"/></pattern></defs>`;
+  h+=`<rect x="0" y="0" width="${S}" height="${S}" style="fill:var(--paper)"/>`;
+  // tarama (karanlık), aydınlık karelerin taraması açılınca silinir
+  for(let r=0;r<N;r++)for(let cc=0;cc<N;cc++){
+    const isLit=lit([r,cc]);
+    const delay=isLit?Math.min(...c.police.map(q=>cheb([r,cc],q)))*90:0;
+    h+=`<rect class="hatch${isLit&&!o.pre?' clear':''}" x="${cc*U}" y="${r*U}" width="${U}" height="${U}" fill="url(#${pid})" style="transition-delay:${delay}ms" data-lit="${isLit?1:0}"/>`;
+  }
+  // ızgara
+  let g='';for(let i=1;i<N;i++){g+=`M${i*U} 0V${S}M0 ${i*U}H${S}`}
+  h+=`<path d="${g}" style="stroke:var(--line);stroke-width:1.5;fill:none"/>`;
+  // kırmızı ip / halka
+  if(o.hl){
+    const w=o.hl,x=w.p[1]*U+50,y=w.p[0]*U+50;
+    if(w.t==='ok'){
+      let r=w.p[0],cc=w.p[1];while(r+w.d[0]>=0&&r+w.d[0]<N&&cc+w.d[1]>=0&&cc+w.d[1]<N){r+=w.d[0];cc+=w.d[1]}
+      const ex=cc*U+50+w.d[1]*50,ey=r*U+50+w.d[0]*50,len=Math.hypot(ex-x,ey-y);
+      h+=`<line class="draw" x1="${x}" y1="${y}" x2="${ex}" y2="${ey}" style="--len:${len.toFixed(0)};stroke:var(--red);stroke-width:4;stroke-linecap:round"/>`;
+    }else{
+      const n=w.n,x0=Math.max(0,(w.p[1]-n)*U),y0=Math.max(0,(w.p[0]-n)*U),x1=Math.min(S,(w.p[1]+n+1)*U),y1=Math.min(S,(w.p[0]+n+1)*U);
+      const ix0=(w.p[1]-n+1)*U,iy0=(w.p[0]-n+1)*U,ix1=(w.p[1]+n)*U,iy1=(w.p[0]+n)*U;
+      h+=`<path d="M${x0} ${y0}H${x1}V${y1}H${x0}Z M${Math.max(0,ix0)} ${Math.max(0,iy0)}V${Math.min(S,iy1)}H${Math.min(S,ix1)}V${Math.max(0,iy0)}Z" style="fill:var(--red-soft);fill-rule:evenodd;stroke:var(--red);stroke-width:3;stroke-dasharray:10 7"/>`;
+    }
+  }
+  // taşlar
+  let pc='';
+  for(let r=0;r<N;r++)for(let cc=0;cc<N;cc++){
+    const x=cc*U+50,y=r*U+50;
+    if(at(c.police,r,cc)>=0){pc+=P.police(x,y);continue}
+    const si=at(c.sus,r,cc);
+    if(si>=0){pc+=P.sus(x,y,L[si],o.innocent&&o.innocent.has(si));if(o.pick===si)pc+=P.ring(x,y);continue}
+    const wi=c.wit.findIndex(w=>w.p[0]===r&&w.p[1]===cc);
+    if(wi>=0){const w=c.wit[wi];pc+=w.t==='ok'?P.witOk(x,y,w.d):P.witNum(x,y,w.n);continue}
+    const m=o.marks&&o.marks[r*N+cc];
+    if(m==='x')pc+=P.x(x,y);
+    if(m==='v')pc+=P.victim(x,y);
+  }
+  h+=`<g class="pc">${pc}</g>`;
+  h+=`<rect x="1.5" y="1.5" width="${S-3}" height="${S-3}" rx="6" style="fill:none;stroke:var(--ink);stroke-width:3"/>`;
+  if(o.done){
+    const sy=(c.victim&&c.victim[0]<N/2)?S*.74:S*.26;
+    h+=`<g class="stamp"><g transform="translate(${S/2} ${sy})"><rect x="-${S*.36}" y="-${S*.085}" width="${S*.72}" height="${S*.17}" rx="10" style="fill:var(--paper);fill-opacity:.82;stroke:var(--red);stroke-width:5"/><rect x="-${S*.36-9}" y="-${S*.085-9}" width="${S*.72-18}" height="${S*.17-18}" rx="5" style="fill:none;stroke:var(--red);stroke-width:2"/><text y="${S*.032}" text-anchor="middle" style="font:700 ${S*.07}px var(--sans);letter-spacing:.12em;fill:var(--red)">DOSYA KAPANDI</text></g></g>`;
+  }
+  return `<svg viewBox="-2 -2 ${S+4} ${S+4}" xmlns="http://www.w3.org/2000/svg">${h}</svg>`;
+}
+const svgInner=s=>s.replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
+
+/* ---------- yönlendirme ---------- */
+let curHash='';
+function nav(h){curHash=h;const before=location.hash;try{location.hash=h}catch(e){}if(location.hash===before)route()}
+function route(){
+  const h=location.hash?location.hash.slice(1):curHash;
+  stopTimer();closeSheet();
+  ['vHome','vHow','vCase'].forEach(id=>$('#'+id).hidden=true);
+  $('#navCases').setAttribute('aria-current',String(h===''));
+  $('#navHow').setAttribute('aria-current',String(h==='nasil'));
+  const m=h.match(/^vaka-(\d+)$/);
+  if(m&&CASES[+m[1]-1]){openCase(+m[1]-1)}
+  else if(h==='nasil'){renderHow();$('#vHow').hidden=false}
+  else{renderHome();$('#vHome').hidden=false}
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+$('#homeLink').onclick=e=>{e.preventDefault();nav('')};
+$('#navCases').onclick=()=>nav('');
+$('#navHow').onclick=()=>nav('nasil');
+$('#ctaHow').onclick=()=>nav('nasil');
+$('#ctaStart').onclick=()=>{const i=CASES.findIndex(c=>!(store[c.no]&&store[c.no].done));nav('vaka-'+((i<0?0:i)+1))};
+
+/* ---------- ana sayfa ---------- */
+function renderHome(){
+  const c=CASES[0];
+  if(c)$('#heroArt').innerHTML=boardSVG(c,{mini:1});
+  $('#caseList').innerHTML=CASES.map((c,i)=>{
+    const st=store[c.no],done=st&&st.done;
+    const kind=c.wit.some(w=>w.t==='sayi')?(c.wit.every(w=>w.t==='sayi')?'sayılı tanık':'oklu + sayılı tanık'):'oklu tanık';
+    return `<li><button class="row${done?' done':''}" type="button" data-i="${i}"><span class="n">${pad(c.no)}</span><span><span class="t">${c.title}</span><span class="s">${c.N}×${c.N} · ${c.sus.length} şüpheli · ${kind}</span></span><span class="r num">${done?`${fmt(st.time)}${st.err?` · ${st.err}✗`:''}`:'aç →'}</span></button></li>`;
+  }).join('');
+  $('#ctaStart').textContent=CASES.some(c=>store[c.no]&&store[c.no].done)?'kaldığın yerden devam':'ilk vakayı aç';
+}
+$('#caseList').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b)nav('vaka-'+(+b.dataset.i+1))});
+
+/* ---------- kurallar ---------- */
+function ruleIcons(){
+  const s=(inner)=>`<svg viewBox="0 0 100 100">${inner}</svg>`;
+  const bg=`<rect x="2" y="2" width="96" height="96" rx="14" style="fill:var(--paper-2)"/>`;
+  return{
+    police:s(bg+P.police(50,50)),
+    ok:s(bg+P.witOk(50,50,[0,1])),
+    num:s(bg+P.witNum(50,50,2)),
+    sus:s(bg+P.sus(50,50,'?')),
+  };
+}
+function rulesHTML(c){
+  const I=ruleIcons(),hasNum=!c||c.wit.some(w=>w.t==='sayi'),hasOk=!c||c.wit.some(w=>w.t==='ok');
+  let h=`<ul class="rules">`;
+  h+=`<li>${I.police}<span><b>polis</b> etrafındaki 8 kareyi görür. orası taranmaz: kurban orada olamaz, orada duran şüpheli masumdur.</span></li>`;
+  if(hasOk)h+=`<li>${I.ok}<span><b>oklu tanık</b> kurbanı gösterir. kurban okun çizgisi üzerindedir: düz, yan ya da çapraz.</span></li>`;
+  if(hasNum)h+=`<li>${I.num}<span><b>sayılı tanık</b> mesafeyi söyler. kurban bu tanığa tam o kadar kare uzaktadır, çapraz adım da 1 sayılır.${c&&c.no===7?'<span class="new">yeni</span>':''}</span></li>`;
+  h+=`<li>${I.sus}<span><b>katil</b> kurbanın hemen yanındadır (çapraz dahil). kurbanın yanında taralı karede duran tek şüpheli odur.</span></li>`;
+  return h+`</ul>`;
+}
+
+/* ---------- nasıl oynanır ---------- */
+function renderHow(){
+  const d1={N:4,police:[[1,1]],sus:[[0,2],[3,3]],wit:[]};
+  const d2={N:4,police:[],sus:[],wit:[{t:'ok',p:[3,0],d:[-1,1]}]};
+  const d3={N:4,police:[[0,0]],sus:[[1,1],[2,3]],wit:[]};
+  const d4={N:4,police:[],sus:[],wit:[{t:'sayi',p:[1,1],n:2}]};
+  $('#vHow').innerHTML=`
+    <h1>nasıl oynanır</h1>
+    <p class="lead">her vakada bir kurban ve bir katil var. ikisini de bul. üç kural yeter.</p>
+    <div class="demo">${boardSVG(d1,{mini:2,innocent:new Set([0])})}<div><span class="no">kural 1</span><h3>polis görür</h3><p>polis etrafındaki 8 kareyi görür, o kareler taranmaz. <b>kurban taralı bir karededir.</b> taranmamış yerde duran şüpheli masumdur.</p></div></div>
+    <div class="demo">${boardSVG(d2,{mini:3,hl:d2.wit[0]})}<div><span class="no">kural 2</span><h3>tanık gösterir</h3><p>tanığın oku kurbanı gösterir. <b>kurban kırmızı çizginin üzerinde</b> bir yerdedir.</p></div></div>
+    <div class="demo">${boardSVG(d3,{mini:4,innocent:new Set([0]),marks:{14:'v'},pick:1})}<div><span class="no">kural 3</span><h3>katil yanındadır</h3><p>kurbanın hemen yanında (çapraz dahil) <b>taralı karede duran tek bir şüpheli</b> vardır. katil odur.</p></div></div>
+    <div class="demo">${boardSVG(d4,{mini:5,hl:d4.wit[0]})}<div><span class="no">7. vakadan sonra</span><h3>sayılı tanık</h3><p>bu tanık yön değil mesafe söyler. <b>kurban tam o kadar kare uzaktadır</b>, çapraz adım da 1 sayılır.</p></div></div>
+    <p class="ctrl"><b>oynarken:</b> taralı bir kareye dokun: önce ×, sonra kurban işareti. tanığa dokununca çizgisi görünür. kurbanı bulunca <b>suçla</b>'ya bas ve katile dokun.</p>
+    <div class="acts"><button class="btn ink" type="button" id="howGo">ilk vakayı aç</button></div>`;
+  $('#howGo').onclick=()=>{store.seenHow=true;save();nav('vaka-1')};
+}
+
+/* ---------- vaka ---------- */
+let G=null,timer=null,hlTimer=null;
+function stopTimer(){clearInterval(timer);timer=null}
+function elapsed(){return G?G.base+(G.startAt?Math.floor((Date.now()-G.startAt)/1000):0):0}
+function openCase(i){
+  const c=CASES[i];
+  G={i,c,N:c.N,marks:{},innocent:new Set(),err:0,hints:0,base:0,startAt:null,on:false,accusing:false,done:false,hl:null,pick:null,hist:[]};
+  $('#vCase').hidden=false;
+  $('#cK').textContent=`vaka ${pad(c.no)} · ${c.N}×${c.N}`;$('#cTitle').textContent=c.title;
+  $('#sTime').textContent='0:00';$('#sTime').classList.remove('run');
+  $('#stage').classList.add('pre');$('#cover').hidden=false;
+  setStatus('hazır olduğunda dosyayı aç. taralı kareler polisin göremediği yerler.');
+  draw(true);updateTools();
+  if(c.wit.some(w=>w.t==='sayi')&&!store.seenNum)showNewWitness();
+}
+function draw(pre){
+  const s=boardSVG(G.c,{marks:G.marks,innocent:G.innocent,hl:G.hl,pick:G.pick,done:G.done,pre});
+  const b=$('#board');b.setAttribute('viewBox',s.match(/viewBox="([^"]+)"/)[1]);b.innerHTML=svgInner(s);
+}
+function clearLit(){$('#board').querySelectorAll('.hatch[data-lit="1"]').forEach(e=>e.classList.add('clear'))}
+function clearLitNow(){$('#board').querySelectorAll('.hatch[data-lit="1"]').forEach(e=>{e.style.transition='none';e.classList.add('clear')})}
+function setStatus(t,k){$('#statusTxt').textContent=t;$('#status').className='status'+(k?' '+k:'')}
+function updateTools(){
+  const on=G.on&&!G.done,hasV=Object.values(G.marks).includes('v');
+  $('#accuseBtn').disabled=!on||!hasV;$('#accuseBtn').textContent=G.accusing?'vazgeç':'suçla';
+  $('#hintBtn').disabled=!on||G.hints>=3;$('#hintC').textContent=3-G.hints;
+  $('#undoBtn').disabled=!on||!G.hist.length;$('#clearBtn').disabled=!on;
+}
+$('#startBtn').onclick=()=>{
+  G.on=true;G.startAt=Date.now();
+  // önce taramayı her yerde göster, sonra polisin gördüğü yerler silinsin
+  draw(true);
+  $('#cover').hidden=true;$('#stage').classList.remove('pre');
+  requestAnimationFrame(()=>requestAnimationFrame(clearLit));
+  $('#sTime').classList.add('run');
+  timer=setInterval(()=>{$('#sTime').textContent=fmt(elapsed())},1000);
+  setStatus('taralı bir kareye dokun: önce ×, sonra kurban. tanığa dokun: bakışı görünür.');
+  updateTools();
+};
+function occupant(r,c){
+  const C=G.c;
+  if(C.police.some(p=>p[0]===r&&p[1]===c))return{k:'police'};
+  const si=C.sus.findIndex(p=>p[0]===r&&p[1]===c);if(si>=0)return{k:'sus',i:si};
+  const wi=C.wit.findIndex(w=>w.p[0]===r&&w.p[1]===c);if(wi>=0)return{k:'wit',i:wi};
+  return null;
+}
+const isLit=p=>G.c.police.some(q=>cheb(p,q)<=1);
+function snap(){G.hist.push({marks:{...G.marks},innocent:[...G.innocent]});if(G.hist.length>80)G.hist.shift()}
+function redraw(){draw();clearLitNow();updateTools()}
+$('#board').addEventListener('click',e=>{
+  if(!G||!G.on||G.done)return;
+  const b=$('#board'),pt=b.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+  const p=pt.matrixTransform(b.getScreenCTM().inverse());
+  const r=Math.floor(p.y/U),c=Math.floor(p.x/U),N=G.N;
+  if(r<0||c<0||r>=N||c>=N)return;
+  const o=occupant(r,c);
+  if(G.accusing){
+    if(o&&o.k==='sus'){G.pick=o.i;redraw();setTimeout(()=>checkAccuse(o.i),420)}
+    else toast('katil bir şüpheli olmalı. harfli daireye dokun.');
+    return;
+  }
+  if(o&&o.k==='wit'){G.hl=G.c.wit[o.i];redraw();clearTimeout(hlTimer);hlTimer=setTimeout(()=>{if(G&&!G.done){G.hl=null;redraw()}},3000);return}
+  if(o&&o.k==='sus'){snap();if(G.innocent.has(o.i))G.innocent.delete(o.i);else G.innocent.add(o.i);redraw();return}
+  if(o&&o.k==='police'){toast('polis: etrafındaki 8 kareyi görür.');return}
+  if(isLit([r,c])){toast('polis burayı görüyor. kurban burada olamaz.');return}
+  snap();
+  const k=r*N+c,cur=G.marks[k];
+  if(!cur)G.marks[k]='x';
+  else if(cur==='x'){for(const q in G.marks)if(G.marks[q]==='v')G.marks[q]='x';G.marks[k]='v'}
+  else delete G.marks[k];
+  redraw();
+});
+$('#accuseBtn').onclick=()=>{
+  if(G.accusing){G.accusing=false;setStatus('işaretlemeye devam et.');updateTools();return}
+  G.accusing=true;setStatus('katil kim? bir şüpheliye dokun.','go');updateTools();
+};
+function checkAccuse(i){
+  const C=G.c,vk=+Object.keys(G.marks).find(q=>G.marks[q]==='v');
+  const vOk=vk===C.victim[0]*G.N+C.victim[1],kOk=i===C.killer;
+  if(vOk&&kOk){win();return}
+  G.err++;G.accusing=false;G.pick=null;redraw();
+  setStatus(!vOk?'dosya tutmuyor: kurban o karede değil.':'kurban doğru yerde, ama katil başkası.','warn');
+}
+$('#hintBtn').onclick=()=>{
+  const C=G.c,N=G.N,opts=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const k=r*N+c;if(occupant(r,c)||isLit([r,c])||G.marks[k]==='x'||G.marks[k]==='v')continue;
+    if(r===C.victim[0]&&c===C.victim[1])continue;
+    const cand=C.sus.filter(s=>!isLit(s)&&cheb(s,[r,c])===1).length===1;
+    opts.push({k,s:cand?0:1});
+  }
+  if(!opts.length){toast('elenecek kare kalmadı.');return}
+  const m=Math.min(...opts.map(o=>o.s)),best=opts.filter(o=>o.s===m);
+  snap();G.marks[best[Math.floor(Math.random()*best.length)].k]='x';G.hints++;
+  redraw();toast('bir kare elendi.');
+};
+$('#undoBtn').onclick=()=>{const s=G.hist.pop();if(!s)return;G.marks=s.marks;G.innocent=new Set(s.innocent);redraw()};
+$('#clearBtn').onclick=()=>{snap();G.marks={};G.innocent.clear();G.accusing=false;G.pick=null;setStatus('tahta temizlendi. geri almak için geri al.');redraw()};
+$('#rulesBtn').onclick=()=>openSheet(`<div class="grab"></div><h3>kurallar</h3>${rulesHTML(G&&G.c)}<div class="acts"><button class="btn ink grow" type="button" id="rOk">tamam</button></div>`,()=>{$('#rOk').onclick=closeSheet},true);
+
+function win(){
+  G.done=true;G.accusing=false;G.base=elapsed();G.startAt=null;stopTimer();
+  const C=G.c,t=G.base,prev=store[C.no];
+  store[C.no]={done:true,time:prev&&prev.done?Math.min(prev.time,t):t,err:G.err,hints:G.hints};save();
+  G.hl=null;redraw();
+  $('#sTime').classList.remove('run');$('#sTime').textContent=fmt(t);
+  setStatus(`dosya kapandı. katil ${L[C.killer]}.`,'go');
+  const next=CASES[G.i+1];
+  const share=`kör nokta · vaka ${pad(C.no)}\n${fmt(t)} · ${G.err} hata · ${G.hints} ipucu\n${SITE}`;
+  setTimeout(()=>{if(!G||!G.done||G.c!==C)return;openSheet(`<div class="grab"></div><h3>katil ${L[C.killer]}.</h3>
+    <p>kurban taralı bir köşedeydi ve ${L[C.killer]} hemen yanındaydı.</p>
+    <div class="stats num"><div><b>${fmt(t)}</b>süre</div><div><b>${G.err}</b>hata</div><div><b>${G.hints}</b>ipucu</div></div>
+    <div class="share" id="shareTxt">${share.replace(/</g,'&lt;')}</div>
+    <div class="acts">${next?`<button class="btn ink grow" type="button" id="sNext">sonraki vaka</button>`:`<button class="btn ink grow" type="button" id="sHome">bütün dosyalar kapandı</button>`}<button class="btn" type="button" id="sCopy"><svg class="ico"><use href="#i-copy"/></svg>kopyala</button></div>`,()=>{
+      $('#sCopy').onclick=()=>{try{navigator.clipboard.writeText(share).then(()=>toast('kopyalandı.'),()=>toast('metni seçip kopyala.'))}catch(e){toast('metni seçip kopyala.')}};
+      if(next)$('#sNext').onclick=()=>nav('vaka-'+(G.i+2));else $('#sHome').onclick=()=>nav('');
+    },true)},1100);
+}
+function showNewWitness(){
+  const d={N:5,police:[],sus:[],wit:[{t:'sayi',p:[2,2],n:2}]};
+  openSheet(`<div class="grab"></div><h3>yeni tanık</h3><p>bu vakadan itibaren bazı tanıklar yön değil <b>mesafe</b> söylüyor. kurban bu tanığa tam o kadar kare uzaktadır. çapraz adım da 1 sayılır.</p>
+    <div style="width:170px">${boardSVG(d,{mini:6,hl:d.wit[0]})}</div><p>tanığa dokunursan halkası görünür.</p>
+    <div class="acts"><button class="btn ink grow" type="button" id="nwOk">anladım</button></div>`,()=>{$('#nwOk').onclick=()=>{store.seenNum=true;save();closeSheet()}},false);
+}
+let sheetDismiss=false;
+function openSheet(h,bind,dismiss){$('#sheet').innerHTML=h;$('#sheetBg').hidden=false;sheetDismiss=!!dismiss;if(bind)bind();const b=$('#sheet').querySelector('button');if(b)b.focus({preventScroll:true})}
+function closeSheet(){$('#sheetBg').hidden=true}
+$('#sheetBg').addEventListener('click',e=>{if(e.target.id==='sheetBg'&&sheetDismiss)closeSheet()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheetBg').hidden&&sheetDismiss)closeSheet()});
+let tt=null;
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
+
+route();
+})();
+</script>
+</body>
+</html>
