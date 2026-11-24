@@ -97,6 +97,16 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .tbtn:disabled{opacity:.35;cursor:default}
 .tbtn .c{font-weight:500;color:var(--pencil)}
 
+.coach{margin:14px 0 0;padding:14px 16px;border-radius:14px;background:var(--paper-2);display:flex;flex-direction:column;gap:10px}
+.coach .step{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--red)}
+.coach p{margin:0;font-size:15px;line-height:1.5;color:var(--ink)}
+.coach .row2{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.coach .skip{font-size:13px;color:var(--pencil);text-decoration:underline;text-underline-offset:3px;padding:8px 0}
+.legend{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;font-size:12.5px;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:8px;min-width:0}
+.legend svg{width:24px;height:24px;flex:none}
+.legend .tip{grid-column:1/-1;color:var(--pencil);display:block}
+
 /* kurallar / nasıl */
 .rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .rules li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
@@ -168,7 +178,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
     <div class="hero">
       <div>
         <h1>polisin görmediği yerde bir suç <em>işlendi.</em></h1>
-        <p>kurban taralı karelerden birinde. tanıkları dinle, katili bul. tahmin yok, sadece mantık.</p>
+        <p>kurban çizgili karelerden birinde. tanıkları dinle, katili bul. tahmin yok, sadece mantık.</p>
       </div>
       <div id="heroArt"></div>
     </div>
@@ -189,13 +199,15 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
       <svg id="board" role="img" aria-label="olay yeri"></svg>
       <div class="cover" id="cover"><div class="card"><button class="btn ink" type="button" id="startBtn">dosyayı aç</button><p>süre dosyayı açınca başlar</p></div></div>
     </div>
+    <div class="coach" id="coach" aria-live="polite" hidden></div>
     <div class="status" id="status" aria-live="polite"><span class="dot"></span><span id="statusTxt"></span></div>
     <div class="tools">
-      <button class="btn ink grow" type="button" id="accuseBtn" disabled>suçla</button>
+      <button class="btn ink grow" type="button" id="accuseBtn" disabled>dosyayı kapat</button>
       <button class="tbtn" type="button" id="hintBtn" aria-label="ipucu"><svg class="ico"><use href="#i-bulb"/></svg><span class="c num" id="hintC">3</span></button>
       <button class="tbtn" type="button" id="undoBtn" aria-label="geri al"><svg class="ico"><use href="#i-undo"/></svg></button>
       <button class="tbtn" type="button" id="clearBtn" aria-label="temizle"><svg class="ico"><use href="#i-erase"/></svg></button>
     </div>
+    <div class="legend" id="legend"></div>
   </section>
 </div>
 
@@ -227,9 +239,9 @@ const P={
   sus:(x,y,l,inn)=>`<g${inn?' opacity=".38"':''}><circle cx="${x}" cy="${y}" r="27" style="fill:var(--paper);stroke:var(--ink);stroke-width:3.5"/><text x="${x}" y="${y+12}" text-anchor="middle" style="font:italic 400 36px var(--serif);fill:var(--ink)">${l}</text>${inn?`<path d="M${x-30} ${y+18} L${x+30} ${y-18}" style="stroke:var(--ink);stroke-width:3.5;stroke-linecap:round"/>`:''}</g>`,
   witOk:(x,y,d)=>{const a=Math.atan2(d[0],d[1])*180/Math.PI;return `<g><rect x="${x-28}" y="${y-28}" width="56" height="56" rx="10" style="fill:var(--paper);stroke:var(--ink);stroke-width:3"/><g transform="rotate(${a} ${x} ${y})"><path d="M${x-15} ${y} H${x+15} M${x+5} ${y-10} L${x+16} ${y} L${x+5} ${y+10}" style="fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round"/></g></g>`},
   witNum:(x,y,n)=>`<g><rect x="${x-28}" y="${y-28}" width="56" height="56" rx="10" style="fill:var(--paper);stroke:var(--ink);stroke-width:3;stroke-dasharray:7 5"/><text x="${x}" y="${y+13}" text-anchor="middle" style="font:600 34px var(--sans);fill:var(--ink)">${n}</text></g>`,
-  x:(x,y)=>`<path class="draw" style="--len:60;stroke:var(--pencil);stroke-width:5;stroke-linecap:round;fill:none" d="M${x-14} ${y-15} Q${x} ${y-1} ${x+15} ${y+14} M${x+14} ${y-14} Q${x-1} ${y+1} ${x-15} ${y+15}"/>`,
-  victim:(x,y)=>`<g><circle cx="${x}" cy="${y}" r="22" style="fill:var(--red)"/><circle class="draw" cx="${x}" cy="${y}" r="33" style="--len:210;fill:none;stroke:var(--red);stroke-width:2.5"/></g>`,
-  ring:(x,y)=>`<circle class="draw" cx="${x}" cy="${y}" r="40" style="--len:260;fill:none;stroke:var(--red);stroke-width:4" transform="rotate(-90 ${x} ${y})"/>`,
+  x:(x,y,a)=>`<path class="${a?'draw':''}" style="--len:60;stroke:var(--pencil);stroke-width:5;stroke-linecap:round;fill:none" d="M${x-14} ${y-15} Q${x} ${y-1} ${x+15} ${y+14} M${x+14} ${y-14} Q${x-1} ${y+1} ${x-15} ${y+15}"/>`,
+  victim:(x,y,a)=>`<g><circle cx="${x}" cy="${y}" r="22" style="fill:var(--red)"/><circle class="${a?'draw':''}" cx="${x}" cy="${y}" r="33" style="--len:210;fill:none;stroke:var(--red);stroke-width:2.5"/></g>`,
+  ring:(x,y,a)=>`<circle class="${a?'draw':''}" cx="${x}" cy="${y}" r="40" style="--len:260;fill:none;stroke:var(--red);stroke-width:4" transform="rotate(-90 ${x} ${y})"/>`,
 };
 
 function boardSVG(c,opt){
@@ -255,25 +267,27 @@ function boardSVG(c,opt){
     if(w.t==='ok'){
       let r=w.p[0],cc=w.p[1];while(r+w.d[0]>=0&&r+w.d[0]<N&&cc+w.d[1]>=0&&cc+w.d[1]<N){r+=w.d[0];cc+=w.d[1]}
       const ex=cc*U+50+w.d[1]*50,ey=r*U+50+w.d[0]*50,len=Math.hypot(ex-x,ey-y);
-      h+=`<line class="draw" x1="${x}" y1="${y}" x2="${ex}" y2="${ey}" style="--len:${len.toFixed(0)};stroke:var(--red);stroke-width:4;stroke-linecap:round"/>`;
+      h+=`<line class="${o.animHl?'draw':''}" x1="${x}" y1="${y}" x2="${ex}" y2="${ey}" style="--len:${len.toFixed(0)};stroke:var(--red);stroke-width:4;stroke-linecap:round"/>`;
     }else{
       const n=w.n,x0=Math.max(0,(w.p[1]-n)*U),y0=Math.max(0,(w.p[0]-n)*U),x1=Math.min(S,(w.p[1]+n+1)*U),y1=Math.min(S,(w.p[0]+n+1)*U);
       const ix0=(w.p[1]-n+1)*U,iy0=(w.p[0]-n+1)*U,ix1=(w.p[1]+n)*U,iy1=(w.p[0]+n)*U;
       h+=`<path d="M${x0} ${y0}H${x1}V${y1}H${x0}Z M${Math.max(0,ix0)} ${Math.max(0,iy0)}V${Math.min(S,iy1)}H${Math.min(S,ix1)}V${Math.max(0,iy0)}Z" style="fill:var(--red-soft);fill-rule:evenodd;stroke:var(--red);stroke-width:3;stroke-dasharray:10 7"/>`;
     }
   }
+  // eğitimde gösterilen kareler
+  if(o.focus)o.focus.forEach(([r,cc])=>{h+=`<rect x="${cc*U+5}" y="${r*U+5}" width="${U-10}" height="${U-10}" rx="12" style="fill:var(--red-soft);stroke:var(--red);stroke-width:3.5;stroke-dasharray:9 6"/>`});
   // taşlar
   let pc='';
   for(let r=0;r<N;r++)for(let cc=0;cc<N;cc++){
     const x=cc*U+50,y=r*U+50;
     if(at(c.police,r,cc)>=0){pc+=P.police(x,y);continue}
     const si=at(c.sus,r,cc);
-    if(si>=0){pc+=P.sus(x,y,L[si],o.innocent&&o.innocent.has(si));if(o.pick===si)pc+=P.ring(x,y);continue}
+    if(si>=0){pc+=P.sus(x,y,L[si],(o.innocent&&o.innocent.has(si))||(o.autoInn&&lit([r,cc])));if(o.pick===si)pc+=P.ring(x,y,o.animPick);continue}
     const wi=c.wit.findIndex(w=>w.p[0]===r&&w.p[1]===cc);
     if(wi>=0){const w=c.wit[wi];pc+=w.t==='ok'?P.witOk(x,y,w.d):P.witNum(x,y,w.n);continue}
     const m=o.marks&&o.marks[r*N+cc];
-    if(m==='x')pc+=P.x(x,y);
-    if(m==='v')pc+=P.victim(x,y);
+    if(m==='x')pc+=P.x(x,y,o.anim===r*N+cc);
+    if(m==='v')pc+=P.victim(x,y,o.anim===r*N+cc);
   }
   h+=`<g class="pc">${pc}</g>`;
   h+=`<rect x="1.5" y="1.5" width="${S-3}" height="${S-3}" rx="6" style="fill:none;stroke:var(--ink);stroke-width:3"/>`;
@@ -334,15 +348,16 @@ function ruleIcons(){
 function rulesHTML(c){
   const I=ruleIcons(),hasNum=!c||c.wit.some(w=>w.t==='sayi'),hasOk=!c||c.wit.some(w=>w.t==='ok');
   let h=`<ul class="rules">`;
-  h+=`<li>${I.police}<span><b>polis</b> etrafındaki 8 kareyi görür. orası taranmaz: kurban orada olamaz, orada duran şüpheli masumdur.</span></li>`;
+  h+=`<li>${I.police}<span><b>polis</b> etrafındaki 8 kareyi görür. orası çizgisiz kalır: kurban orada olamaz, orada duran şüpheli masumdur.</span></li>`;
   if(hasOk)h+=`<li>${I.ok}<span><b>oklu tanık</b> kurbanı gösterir. kurban okun çizgisi üzerindedir: düz, yan ya da çapraz.</span></li>`;
   if(hasNum)h+=`<li>${I.num}<span><b>sayılı tanık</b> mesafeyi söyler. kurban bu tanığa tam o kadar kare uzaktadır, çapraz adım da 1 sayılır.${c&&c.no===7?'<span class="new">yeni</span>':''}</span></li>`;
-  h+=`<li>${I.sus}<span><b>katil</b> kurbanın hemen yanındadır (çapraz dahil). kurbanın yanında taralı karede duran tek şüpheli odur.</span></li>`;
+  h+=`<li>${I.sus}<span><b>katil</b> kurbanın hemen yanındadır (çapraz dahil). kurbanın yanında çizgili karede duran tek şüpheli odur.</span></li>`;
   return h+`</ul>`;
 }
 
 /* ---------- nasıl oynanır ---------- */
 function renderHow(){
+  if(!store.seenHow){store.seenHow=true;save()}
   const d1={N:4,police:[[1,1]],sus:[[0,2],[3,3]],wit:[]};
   const d2={N:4,police:[],sus:[],wit:[{t:'ok',p:[3,0],d:[-1,1]}]};
   const d3={N:4,police:[[0,0]],sus:[[1,1],[2,3]],wit:[]};
@@ -350,11 +365,11 @@ function renderHow(){
   $('#vHow').innerHTML=`
     <h1>nasıl oynanır</h1>
     <p class="lead">her vakada bir kurban ve bir katil var. ikisini de bul. üç kural yeter.</p>
-    <div class="demo">${boardSVG(d1,{mini:2,innocent:new Set([0])})}<div><span class="no">kural 1</span><h3>polis görür</h3><p>polis etrafındaki 8 kareyi görür, o kareler taranmaz. <b>kurban taralı bir karededir.</b> taranmamış yerde duran şüpheli masumdur.</p></div></div>
+    <div class="demo">${boardSVG(d1,{mini:2,innocent:new Set([0])})}<div><span class="no">kural 1</span><h3>polis görür</h3><p>polis etrafındaki 8 kareyi görür, o kareler çizgisiz kalır. <b>kurban çizgili bir karededir.</b> çizgisiz yerde duran şüpheli masumdur.</p></div></div>
     <div class="demo">${boardSVG(d2,{mini:3,hl:d2.wit[0]})}<div><span class="no">kural 2</span><h3>tanık gösterir</h3><p>tanığın oku kurbanı gösterir. <b>kurban kırmızı çizginin üzerinde</b> bir yerdedir.</p></div></div>
-    <div class="demo">${boardSVG(d3,{mini:4,innocent:new Set([0]),marks:{14:'v'},pick:1})}<div><span class="no">kural 3</span><h3>katil yanındadır</h3><p>kurbanın hemen yanında (çapraz dahil) <b>taralı karede duran tek bir şüpheli</b> vardır. katil odur.</p></div></div>
+    <div class="demo">${boardSVG(d3,{mini:4,innocent:new Set([0]),marks:{14:'v'},pick:1})}<div><span class="no">kural 3</span><h3>katil yanındadır</h3><p>kurbanın hemen yanında (çapraz dahil) <b>çizgili karede duran tek bir şüpheli</b> vardır. katil odur.</p></div></div>
     <div class="demo">${boardSVG(d4,{mini:5,hl:d4.wit[0]})}<div><span class="no">7. vakadan sonra</span><h3>sayılı tanık</h3><p>bu tanık yön değil mesafe söyler. <b>kurban tam o kadar kare uzaktadır</b>, çapraz adım da 1 sayılır.</p></div></div>
-    <p class="ctrl"><b>oynarken:</b> taralı bir kareye dokun: önce ×, sonra kurban işareti. tanığa dokununca çizgisi görünür. kurbanı bulunca <b>suçla</b>'ya bas ve katile dokun.</p>
+    <p class="ctrl"><b>oynarken:</b> çizgili bir kareye bir kez dokun: × (burada değil). iki kez dokun: kurban. bir şüpheliye dokun: katil olarak seçilir. ikisini de işaretleyince <b>dosyayı kapat</b>. tanığa dokunursan çizgisi görünür. ilk vaka sana adım adım eşlik eder.</p>
     <div class="acts"><button class="btn ink" type="button" id="howGo">ilk vakayı aç</button></div>`;
   $('#howGo').onclick=()=>{store.seenHow=true;save();nav('vaka-1')};
 }
@@ -365,38 +380,50 @@ function stopTimer(){clearInterval(timer);timer=null}
 function elapsed(){return G?G.base+(G.startAt?Math.floor((Date.now()-G.startAt)/1000):0):0}
 function openCase(i){
   const c=CASES[i];
-  G={i,c,N:c.N,marks:{},innocent:new Set(),err:0,hints:0,base:0,startAt:null,on:false,accusing:false,done:false,hl:null,pick:null,hist:[]};
+  G={i,c,N:c.N,marks:{},err:0,hints:0,base:0,startAt:null,on:false,done:false,hl:null,pick:null,focus:null,tut:null,tutHl:null,anim:null,animPick:false,animHl:false,hist:[]};
   $('#vCase').hidden=false;
   $('#cK').textContent=`vaka ${pad(c.no)} · ${c.N}×${c.N}`;$('#cTitle').textContent=c.title;
   $('#sTime').textContent='0:00';$('#sTime').classList.remove('run');
   $('#stage').classList.add('pre');$('#cover').hidden=false;
-  setStatus('hazır olduğunda dosyayı aç. taralı kareler polisin göremediği yerler.');
-  draw(true);updateTools();
+  $('#coach').hidden=true;$('#status').hidden=false;
+  setStatus(c.no===1&&!store.tutDone?'ilk vaka: dosyayı açınca oyun sana adım adım eşlik edecek.':'hazır olduğunda dosyayı aç.');
+  renderLegend();draw(true);updateTools();
   if(c.wit.some(w=>w.t==='sayi')&&!store.seenNum)showNewWitness();
 }
 function draw(pre){
-  const s=boardSVG(G.c,{marks:G.marks,innocent:G.innocent,hl:G.hl,pick:G.pick,done:G.done,pre});
+  const s=boardSVG(G.c,{marks:G.marks,autoInn:true,hl:G.hl,pick:G.pick,done:G.done,pre,focus:G.focus,anim:G.anim,animPick:G.animPick,animHl:G.animHl});
   const b=$('#board');b.setAttribute('viewBox',s.match(/viewBox="([^"]+)"/)[1]);b.innerHTML=svgInner(s);
+  G.anim=null;G.animPick=false;G.animHl=false;
 }
 function clearLit(){$('#board').querySelectorAll('.hatch[data-lit="1"]').forEach(e=>e.classList.add('clear'))}
 function clearLitNow(){$('#board').querySelectorAll('.hatch[data-lit="1"]').forEach(e=>{e.style.transition='none';e.classList.add('clear')})}
 function setStatus(t,k){$('#statusTxt').textContent=t;$('#status').className='status'+(k?' '+k:'')}
+const victimKey=()=>{const k=Object.keys(G.marks).find(q=>G.marks[q]==='v');return k==null?null:+k};
 function updateTools(){
-  const on=G.on&&!G.done,hasV=Object.values(G.marks).includes('v');
-  $('#accuseBtn').disabled=!on||!hasV;$('#accuseBtn').textContent=G.accusing?'vazgeç':'suçla';
-  $('#hintBtn').disabled=!on||G.hints>=3;$('#hintC').textContent=3-G.hints;
+  const on=G.on&&!G.done,hasV=victimKey()!=null;
+  $('#accuseBtn').disabled=!on||!hasV||G.pick==null;
+  $('#hintBtn').disabled=!on||G.hints>=3||!!G.tut;$('#hintC').textContent=3-G.hints;
   $('#undoBtn').disabled=!on||!G.hist.length;$('#clearBtn').disabled=!on;
+}
+// durum satırı: oyuncuya sıradaki adımı söyler
+function guide(){
+  if(!G.on||G.done||G.tut)return;
+  const hasV=victimKey()!=null,hasK=G.pick!=null;
+  if(!hasV&&!hasK)setStatus('çizgili bir kareye dokun: bir kez ×, iki kez kurban. şüpheliye dokun: katil seçilir.');
+  else if(hasV&&!hasK)setStatus('kurban işaretlendi. şimdi katil olduğunu düşündüğün şüpheliye dokun.','go');
+  else if(!hasV&&hasK)setStatus(`katil olarak ${L[G.pick]} seçildi. şimdi kurbanın karesine iki kez dokun.`,'go');
+  else setStatus(`kurban işaretli, katil ${L[G.pick]}. emin olunca dosyayı kapat.`,'go');
 }
 $('#startBtn').onclick=()=>{
   G.on=true;G.startAt=Date.now();
-  // önce taramayı her yerde göster, sonra polisin gördüğü yerler silinsin
+  // önce çizgiler her yerde, sonra polisin gördüğü yerler silinir
   draw(true);
   $('#cover').hidden=true;$('#stage').classList.remove('pre');
   requestAnimationFrame(()=>requestAnimationFrame(clearLit));
   $('#sTime').classList.add('run');
   timer=setInterval(()=>{$('#sTime').textContent=fmt(elapsed())},1000);
-  setStatus('taralı bir kareye dokun: önce ×, sonra kurban. tanığa dokun: bakışı görünür.');
   updateTools();
+  if(G.c.no===1&&!store.tutDone)setTimeout(startTut,700);else guide();
 };
 function occupant(r,c){
   const C=G.c;
@@ -406,8 +433,8 @@ function occupant(r,c){
   return null;
 }
 const isLit=p=>G.c.police.some(q=>cheb(p,q)<=1);
-function snap(){G.hist.push({marks:{...G.marks},innocent:[...G.innocent]});if(G.hist.length>80)G.hist.shift()}
-function redraw(){draw();clearLitNow();updateTools()}
+function snap(){G.hist.push({marks:{...G.marks},pick:G.pick});if(G.hist.length>80)G.hist.shift()}
+function redraw(){draw();clearLitNow();updateTools();guide()}
 $('#board').addEventListener('click',e=>{
   if(!G||!G.on||G.done)return;
   const b=$('#board'),pt=b.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
@@ -415,13 +442,16 @@ $('#board').addEventListener('click',e=>{
   const r=Math.floor(p.y/U),c=Math.floor(p.x/U),N=G.N;
   if(r<0||c<0||r>=N||c>=N)return;
   const o=occupant(r,c);
-  if(G.accusing){
-    if(o&&o.k==='sus'){G.pick=o.i;redraw();setTimeout(()=>checkAccuse(o.i),420)}
-    else toast('katil bir şüpheli olmalı. harfli daireye dokun.');
+  if(o&&o.k==='wit'){
+    G.hl=G.c.wit[o.i];G.animHl=true;redraw();clearTimeout(hlTimer);
+    hlTimer=setTimeout(()=>{if(G&&!G.done){G.hl=G.tutHl;redraw()}},3000);
     return;
   }
-  if(o&&o.k==='wit'){G.hl=G.c.wit[o.i];redraw();clearTimeout(hlTimer);hlTimer=setTimeout(()=>{if(G&&!G.done){G.hl=null;redraw()}},3000);return}
-  if(o&&o.k==='sus'){snap();if(G.innocent.has(o.i))G.innocent.delete(o.i);else G.innocent.add(o.i);redraw();return}
+  if(o&&o.k==='sus'){
+    if(isLit(G.c.sus[o.i])){toast(`polis ${L[o.i]} şüphelisini görüyor. ${L[o.i]} masum.`);return}
+    snap();G.pick=G.pick===o.i?null:o.i;G.animPick=G.pick!=null;redraw();tutEvent('pick');
+    return;
+  }
   if(o&&o.k==='police'){toast('polis: etrafındaki 8 kareyi görür.');return}
   if(isLit([r,c])){toast('polis burayı görüyor. kurban burada olamaz.');return}
   snap();
@@ -429,18 +459,15 @@ $('#board').addEventListener('click',e=>{
   if(!cur)G.marks[k]='x';
   else if(cur==='x'){for(const q in G.marks)if(G.marks[q]==='v')G.marks[q]='x';G.marks[k]='v'}
   else delete G.marks[k];
-  redraw();
+  G.anim=k;redraw();tutEvent('mark');
 });
-$('#accuseBtn').onclick=()=>{
-  if(G.accusing){G.accusing=false;setStatus('işaretlemeye devam et.');updateTools();return}
-  G.accusing=true;setStatus('katil kim? bir şüpheliye dokun.','go');updateTools();
-};
+$('#accuseBtn').onclick=()=>checkAccuse(G.pick);
 function checkAccuse(i){
-  const C=G.c,vk=+Object.keys(G.marks).find(q=>G.marks[q]==='v');
+  const C=G.c,vk=victimKey();
   const vOk=vk===C.victim[0]*G.N+C.victim[1],kOk=i===C.killer;
-  if(vOk&&kOk){win();return}
-  G.err++;G.accusing=false;G.pick=null;redraw();
-  setStatus(!vOk?'dosya tutmuyor: kurban o karede değil.':'kurban doğru yerde, ama katil başkası.','warn');
+  if(vOk&&kOk){endTut(true);win();return}
+  G.err++;redraw();
+  setStatus(!vOk&&!kOk?'dosya tutmuyor: kurban o karede değil, katil de o değil.':!vOk?'dosya tutmuyor: kurban o karede değil.':'kurban doğru yerde, ama katil başkası.','warn');
 }
 $('#hintBtn').onclick=()=>{
   const C=G.c,N=G.N,opts=[];
@@ -452,15 +479,70 @@ $('#hintBtn').onclick=()=>{
   }
   if(!opts.length){toast('elenecek kare kalmadı.');return}
   const m=Math.min(...opts.map(o=>o.s)),best=opts.filter(o=>o.s===m);
-  snap();G.marks[best[Math.floor(Math.random()*best.length)].k]='x';G.hints++;
-  redraw();toast('bir kare elendi.');
+  snap();const k=best[Math.floor(Math.random()*best.length)].k;G.marks[k]='x';G.hints++;G.anim=k;
+  redraw();toast('bir kare elendi: kurban orada olamaz.');
 };
-$('#undoBtn').onclick=()=>{const s=G.hist.pop();if(!s)return;G.marks=s.marks;G.innocent=new Set(s.innocent);redraw()};
-$('#clearBtn').onclick=()=>{snap();G.marks={};G.innocent.clear();G.accusing=false;G.pick=null;setStatus('tahta temizlendi. geri almak için geri al.');redraw()};
+$('#undoBtn').onclick=()=>{const s=G.hist.pop();if(!s)return;G.marks=s.marks;G.pick=s.pick;redraw()};
+$('#clearBtn').onclick=()=>{snap();G.marks={};G.pick=null;redraw();setStatus('tahta temizlendi. geri almak için ↶ düğmesine bas.')};
 $('#rulesBtn').onclick=()=>openSheet(`<div class="grab"></div><h3>kurallar</h3>${rulesHTML(G&&G.c)}<div class="acts"><button class="btn ink grow" type="button" id="rOk">tamam</button></div>`,()=>{$('#rOk').onclick=closeSheet},true);
 
+/* ---------- açıklama satırı ---------- */
+function renderLegend(){
+  const s=inner=>`<svg viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>`;
+  const hatch=`<svg viewBox="0 0 100 100" aria-hidden="true"><defs><pattern id="hleg" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="16" style="stroke:var(--hatch);stroke-width:5"/></pattern></defs><rect x="8" y="8" width="84" height="84" rx="10" fill="url(#hleg)" style="stroke:var(--line);stroke-width:3"/></svg>`;
+  const c=G.c,hasOk=c.wit.some(w=>w.t==='ok'),hasNum=c.wit.some(w=>w.t==='sayi');
+  $('#legend').innerHTML=`<span>${s(P.police(50,50))}polis</span><span>${s(P.sus(50,50,'A'))}şüpheli</span>${hasOk?`<span>${s(P.witOk(50,50,[0,1]))}tanık: yön</span>`:''}${hasNum?`<span>${s(P.witNum(50,50,2))}tanık: mesafe</span>`:''}<span>${hatch}polisin görmediği yer</span><span class="tip">kareye bir dokun: × · iki dokun: kurban · şüpheliye dokun: katil</span>`;
+}
+
+/* ---------- ilk vaka eğitimi ---------- */
+const GEN=l=>l==='A'?"'nın":"'nin",DAT=l=>l==='A'?"'ya":"'ye";
+const DIR={'0,-1':'sola','0,1':'sağa','-1,0':'yukarı','1,0':'aşağı','-1,-1':'sol üste','-1,1':'sağ üste','1,-1':'sol alta','1,1':'sağ alta'};
+function startTut(){
+  if(!G||G.done)return;
+  const C=G.c,N=G.N,all=C.sus.map((s,i)=>i),inn=all.filter(i=>isLit(C.sus[i])),dark=all.filter(i=>!isLit(C.sus[i]));
+  const ring=p=>{const a=[];for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const r=p[0]+dr,c=p[1]+dc;if(r>=0&&c>=0&&r<N&&c<N)a.push([r,c])}return a};
+  const w=C.wit[0],k=L[C.killer];
+  G.tut=[
+    {t:'bu yıldız polis. etrafındaki 8 kareyi görür, o yüzden oralar çizgisiz. kurban çizgili karelerden birinde.',focus:C.police.flatMap(ring)},
+    {t:`${inn.map(i=>L[i]).join(', ')} polisin gördüğü yerde duruyor. o yüzden masum, soluk görünüyor.`,focus:inn.map(i=>C.sus[i])},
+    {t:`${dark.map(i=>L[i]).join(', ')} çizgili alanda. polisin görmediği tek şüpheli bu. katil olabilir.`,focus:dark.map(i=>C.sus[i])},
+    {t:`bu tanık. oku ${DIR[w.d.join(',')]} bakıyor: kurban bu kırmızı çizginin üzerinde bir yerde.`,focus:[w.p],hl:w},
+    {t:`katil kurbanın hemen yanında olmalı. kırmızı çizginin üzerinde ${k}${GEN(k)} hemen yanındaki boş kareyi bul ve ona iki kez dokun.`,hl:w,wait:'victim'},
+    {t:`doğru, kurban orada. şimdi katile, ${k}${DAT(k)} dokun.`,hl:w,wait:'pick'},
+    {t:'hepsi tamam. şimdi “dosyayı kapat” düğmesine bas.',wait:'end'},
+  ];
+  G.tutI=-1;nextTut();
+}
+function nextTut(){
+  G.tutI++;const s=G.tut[G.tutI];if(!s){endTut(true);return}
+  G.focus=s.focus||null;G.hl=s.hl||null;G.tutHl=s.hl||null;G.animHl=!!s.hl;
+  draw();clearLitNow();updateTools();
+  $('#status').hidden=true;$('#coach').hidden=false;
+  $('#coach').innerHTML=`<div class="step">ilk vaka · adım ${G.tutI+1}/${G.tut.length}</div><p>${s.t}</p><div class="row2">${s.wait?'<span></span>':'<button class="btn ink" type="button" id="tutNext">devam</button>'}<button class="skip" type="button" id="tutSkip">eğitimi geç</button></div>`;
+  const nb=$('#tutNext');if(nb)nb.onclick=nextTut;
+  $('#tutSkip').onclick=()=>endTut(true);
+}
+function tutEvent(kind){
+  if(!G||!G.tut)return;
+  const s=G.tut[G.tutI],C=G.c;
+  if(s.wait==='victim'&&kind==='mark'){
+    const vk=victimKey();if(vk==null)return;
+    if(vk===C.victim[0]*G.N+C.victim[1])nextTut();
+    else toast('bu kare olmaz: ya çizginin üzerinde değil ya da katilin hemen yanında değil.');
+  }else if(s.wait==='pick'&&kind==='pick'){
+    if(G.pick===C.killer)nextTut();else if(G.pick!=null)toast('o değil. kurbanın hemen yanında, çizgili alandaki şüpheliye dokun.');
+  }
+}
+function endTut(done){
+  if(!G||!G.tut)return;
+  G.tut=null;G.focus=null;G.tutHl=null;G.hl=null;
+  if(done){store.tutDone=true;save()}
+  $('#coach').hidden=true;$('#status').hidden=false;
+  if(!G.done)redraw();
+}
+
 function win(){
-  G.done=true;G.accusing=false;G.base=elapsed();G.startAt=null;stopTimer();
+  G.done=true;G.focus=null;G.base=elapsed();G.startAt=null;stopTimer();
   const C=G.c,t=G.base,prev=store[C.no];
   store[C.no]={done:true,time:prev&&prev.done?Math.min(prev.time,t):t,err:G.err,hints:G.hints};save();
   G.hl=null;redraw();
@@ -469,7 +551,7 @@ function win(){
   const next=CASES[G.i+1];
   const share=`kör nokta · vaka ${pad(C.no)}\n${fmt(t)} · ${G.err} hata · ${G.hints} ipucu\n${SITE}`;
   setTimeout(()=>{if(!G||!G.done||G.c!==C)return;openSheet(`<div class="grab"></div><h3>katil ${L[C.killer]}.</h3>
-    <p>kurban taralı bir köşedeydi ve ${L[C.killer]} hemen yanındaydı.</p>
+    <p>kurban çizgili bir köşedeydi ve ${L[C.killer]} hemen yanındaydı.</p>
     <div class="stats num"><div><b>${fmt(t)}</b>süre</div><div><b>${G.err}</b>hata</div><div><b>${G.hints}</b>ipucu</div></div>
     <div class="share" id="shareTxt">${share.replace(/</g,'&lt;')}</div>
     <div class="acts">${next?`<button class="btn ink grow" type="button" id="sNext">sonraki vaka</button>`:`<button class="btn ink grow" type="button" id="sHome">bütün dosyalar kapandı</button>`}<button class="btn" type="button" id="sCopy"><svg class="ico"><use href="#i-copy"/></svg>kopyala</button></div>`,()=>{
@@ -502,6 +584,8 @@ function applyTheme(t){
 applyTheme(store.theme);
 $('#themeBtn').onclick=()=>{store.theme=store.theme==='dark'?'light':'dark';save();applyTheme(store.theme)};
 
+// ilk ziyarette önce nasıl oynanır gösterilir
+if(!location.hash&&!store.seenHow)curHash='nasil';
 route();
 })();
 </script>
