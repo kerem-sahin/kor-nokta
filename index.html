@@ -268,6 +268,8 @@ function boardSVG(c,opt){
       let r=w.p[0],cc=w.p[1];while(r+w.d[0]>=0&&r+w.d[0]<N&&cc+w.d[1]>=0&&cc+w.d[1]<N){r+=w.d[0];cc+=w.d[1]}
       const ex=cc*U+50+w.d[1]*50,ey=r*U+50+w.d[0]*50,len=Math.hypot(ex-x,ey-y);
       h+=`<line class="${o.animHl?'draw':''}" x1="${x}" y1="${y}" x2="${ex}" y2="${ey}" style="--len:${len.toFixed(0)};stroke:var(--red);stroke-width:4;stroke-linecap:round"/>`;
+      // katil bunlardan biri: çizgideki, polisin görmediği bütün şüpheliler
+      c.sus.forEach(sp=>{const dr=sp[0]-w.p[0],dc=sp[1]-w.p[1];if(lit(sp)||(dr&&dc&&Math.abs(dr)!==Math.abs(dc))||Math.sign(dr)!==w.d[0]||Math.sign(dc)!==w.d[1])return;h+=`<circle cx="${sp[1]*U+50}" cy="${sp[0]*U+50}" r="40" style="fill:var(--red-soft);stroke:var(--red);stroke-width:3;stroke-dasharray:9 6"/>`});
     }else{
       const n=w.n,x0=Math.max(0,(w.p[1]-n)*U),y0=Math.max(0,(w.p[0]-n)*U),x1=Math.min(S,(w.p[1]+n+1)*U),y1=Math.min(S,(w.p[0]+n+1)*U);
       const ix0=(w.p[1]-n+1)*U,iy0=(w.p[0]-n+1)*U,ix1=(w.p[1]+n)*U,iy1=(w.p[0]+n)*U;
@@ -349,7 +351,7 @@ function rulesHTML(c){
   const I=ruleIcons(),hasNum=!c||c.wit.some(w=>w.t==='sayi'),hasOk=!c||c.wit.some(w=>w.t==='ok');
   let h=`<ul class="rules">`;
   h+=`<li>${I.police}<span><b>polis</b> etrafındaki 8 kareyi görür. orası çizgisiz kalır: kurban orada olamaz, orada duran şüpheli masumdur.</span></li>`;
-  if(hasOk)h+=`<li>${I.ok}<span><b>gören tanık</b> katili gördü. katil, okun çizgisi üzerindeki şüphelilerden biridir.</span></li>`;
+  if(hasOk)h+=`<li>${I.ok}<span><b>gören tanık</b> katili gördü ama yüzünü seçemedi. katil, okun çizgisi üzerindeki şüphelilerden biridir; en yakındaki olmak zorunda değil.</span></li>`;
   if(hasNum)h+=`<li>${I.num}<span><b>duyan tanık</b> çığlığı duydu. kurban bu tanığa tam o kadar kare uzaktadır, çapraz adım da 1 sayılır.</span></li>`;
   h+=`<li>${I.sus}<span><b>katil</b> kurbanın hemen yanındadır (çapraz dahil). kurbanın yanında çizgili karede <b>başka şüpheli yoktur</b>.</span></li>`;
   return h+`</ul>`;
@@ -359,14 +361,14 @@ function rulesHTML(c){
 function renderHow(){
   if(!store.seenHow){store.seenHow=true;save()}
   const d1={N:4,police:[[1,1]],sus:[[0,2],[3,3]],wit:[]};
-  const d2={N:4,police:[],sus:[[1,2],[2,3]],wit:[{t:'ok',p:[3,0],d:[-1,1]}]};
+  const d2={N:4,police:[],sus:[[2,1],[0,3],[1,3]],wit:[{t:'ok',p:[3,0],d:[-1,1]}]};
   const d4={N:4,police:[],sus:[],wit:[{t:'sayi',p:[1,1],n:2}]};
   const d3={N:4,police:[],sus:[[1,1],[1,3]],wit:[]};
   $('#vHow').innerHTML=`
     <h1>nasıl oynanır</h1>
     <p class="lead">her vakada bir kurban ve bir katil var. ikisini de bul. tanıkların biri katili, biri kurbanı anlatır; ikisini birleştirmen gerekir.</p>
     <div class="demo">${boardSVG(d1,{mini:2,innocent:new Set([0])})}<div><span class="no">kural 1</span><h3>polis görür</h3><p>polis etrafındaki 8 kareyi görür, o kareler çizgisiz kalır. <b>kurban çizgili bir karededir.</b> çizgisiz yerde duran şüpheli masumdur.</p></div></div>
-    <div class="demo">${boardSVG(d2,{mini:3,hl:d2.wit[0]})}<div><span class="no">kural 2a</span><h3>gören tanık</h3><p>bu tanık <b>katili gördü</b>. katil, kırmızı çizginin üzerindeki şüphelilerden biridir. burada A.</p></div></div>
+    <div class="demo">${boardSVG(d2,{mini:3,hl:d2.wit[0]})}<div><span class="no">kural 2a</span><h3>gören tanık</h3><p>bu tanık <b>katili gördü ama yüzünü seçemedi</b>. katil, kırmızı çizginin üzerindeki şüphelilerden biridir: burada A ya da B. en yakındaki olmak zorunda değil.</p></div></div>
     <div class="demo">${boardSVG(d4,{mini:5,hl:d4.wit[0]})}<div><span class="no">kural 2b</span><h3>duyan tanık</h3><p>bu tanık <b>çığlığı duydu</b>. kurban ona tam o kadar kare uzaktadır, yani kırmızı halkanın üzerindedir. çapraz adım da 1 sayılır.</p></div></div>
     <div class="demo">${boardSVG(d3,{mini:4,marks:{6:'x',8:'v'},pick:0})}<div><span class="no">kural 3</span><h3>katil yanındadır</h3><p>kurbanın hemen yanında (çapraz dahil) <b>çizgili karede tek bir şüpheli</b> vardır: katil. A ile B'nin arasındaki kare kurban olamaz, çünkü ikisinin de yanında.</p></div></div>
     <p class="ctrl"><b>oynarken:</b> çizgili bir kareye bir kez dokun: × (burada değil). iki kez dokun: kurban. bir şüpheliye dokun: katil olarak seçilir. ikisini de işaretleyince <b>dosyayı kapat</b>. tanığa dokunursan çizgisi ya da halkası görünür. ilk vaka sana adım adım eşlik eder.</p>
@@ -504,7 +506,7 @@ function renderLegend(){
   const s=inner=>`<svg viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>`;
   const hatch=`<svg viewBox="0 0 100 100" aria-hidden="true"><defs><pattern id="hleg" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="16" style="stroke:var(--hatch);stroke-width:5"/></pattern></defs><rect x="8" y="8" width="84" height="84" rx="10" fill="url(#hleg)" style="stroke:var(--line);stroke-width:3"/></svg>`;
   const c=G.c,hasOk=c.wit.some(w=>w.t==='ok'),hasNum=c.wit.some(w=>w.t==='sayi');
-  $('#legend').innerHTML=`<span>${s(P.police(50,50))}polis</span><span>${s(P.sus(50,50,'A'))}şüpheli</span>${hasOk?`<span>${s(P.witOk(50,50,[0,1]))}katili gördü: yön</span>`:''}${hasNum?`<span>${s(P.witNum(50,50,2))}çığlığı duydu: mesafe</span>`:''}<span>${hatch}polisin görmediği yer</span><span class="tip">kareye bir dokun: × · iki dokun: kurban · şüpheliye dokun: katil</span>`;
+  $('#legend').innerHTML=`<span>${s(P.police(50,50))}polis</span><span>${s(P.sus(50,50,'A'))}şüpheli</span>${hasOk?`<span>${s(P.witOk(50,50,[0,1]))}katil bu yönde</span>`:''}${hasNum?`<span>${s(P.witNum(50,50,2))}çığlığı duydu: mesafe</span>`:''}<span>${hatch}polisin görmediği yer</span><span class="tip">kareye bir dokun: × · iki dokun: kurban · şüpheliye dokun: katil</span>`;
 }
 
 /* ---------- ilk vaka eğitimi ---------- */
@@ -520,7 +522,7 @@ function startTut(){
   G.tut=[
     {t:'yıldızlar polis. etrafındaki 8 kareyi görürler, o yüzden oralar çizgisiz. kurban çizgili karelerden birinde.',focus:C.police.flatMap(ring)},
     ...(inn.length?[{t:`${names(inn.map(i=>L[i]))} polisin gördüğü yerde duruyor. o yüzden masum, soluk görünüyor.`,focus:inn.map(i=>C.sus[i])}]:[]),
-    {t:`bu tanık katili gördü. oku ${DIR[wo.d.join(',')]} bakıyor. çizginin üzerinde ${names(rl)} var: katil ${rl.length===2?'ikisinden':'bunlardan'} biri.`,focus:[wo.p,...ray.map(i=>C.sus[i])],hl:wo},
+    {t:`bu tanık katili gördü ama yüzünü seçemedi. oku ${DIR[wo.d.join(',')]} bakıyor. çizginin üzerinde ${names(rl)} var: katil ${rl.length===2?'ikisinden':'bunlardan'} biri, en yakındaki olmak zorunda değil.`,focus:[wo.p,...ray.map(i=>C.sus[i])],hl:wo},
     {t:`bu tanık çığlığı duydu. kurban ona tam ${wn.n} kare uzakta, yani kırmızı halkanın üzerinde bir yerde.`,focus:[wn.p],hl:wn},
     {t:`son kural: katil kurbanın hemen yanında ve kurbanın yanında çizgili alanda başka şüpheli yok. halkada, ${either}${GEN(last)} yanında olan ama iki şüphelinin birden yanında olmayan kareyi bul ve ona iki kez dokun.`,hl:wn,focus:ray.map(i=>C.sus[i]),wait:'victim'},
     {t:`doğru, kurban orada. yanındaki tek şüpheli ${k}, tanığın çizgisinde de o var. şimdi ${k}${DAT(k)} dokun.`,hl:wn,wait:'pick'},
