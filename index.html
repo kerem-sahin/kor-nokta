@@ -10,13 +10,12 @@
 <meta name="theme-color" content="#eceee9">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
 <style>
 /* tasarım: dedektif defteri. polisin göremediği yerler kalemle taranmış, tanığın bakışı kırmızı ip, kapanan dosyaya kırmızı damga. */
 :root{
   --paper:#eceee9; --paper-2:#e3e6e0; --ink:#17191c; --ink-2:#3b4046; --pencil:#8a9096; --line:#c7ccc4;
   --hatch:rgba(23,25,28,.26); --red:#cf3a2b; --red-soft:rgba(207,58,43,.12); --veil:rgba(236,238,233,.86);
-  --serif:"Instrument Serif","Iowan Old Style","Times New Roman",serif;
   --sans:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:light;
 }
@@ -54,11 +53,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .btn.ink{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .btn.ink:hover{background:var(--ink-2);border-color:var(--ink-2)}
 .btn:disabled{opacity:.35;cursor:default}
-.label{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--pencil);margin:30px 0 4px}
+.label{font-size:13px;font-weight:500;color:var(--pencil);margin:30px 0 4px}
 .list{list-style:none;margin:0;padding:0}
 .row{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;padding:14px 2px;border-bottom:1px solid var(--line)}
 .row:hover .t{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
-.row .n{font:italic 400 26px/1 var(--serif);color:var(--pencil)}
+.row .n{font:700 22px/1 var(--sans);letter-spacing:-.02em;color:var(--pencil)}
 .row.done .n{color:var(--red)}
 .row .t{font-weight:600;font-size:15px}
 .row .s{display:block;font-size:12.5px;color:var(--pencil);margin-top:1px}
@@ -69,8 +68,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 /* vaka */
 .meta{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:0 0 14px}
 .meta .who{min-width:0}
-.meta .k{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--pencil)}
-.meta h2{margin:2px 0 0;font:italic 400 34px/1 var(--serif);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta .k{font-size:13px;font-weight:500;color:var(--pencil)}
+.meta h2{margin:2px 0 0;font:700 28px/1.1 var(--sans);letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .meta .side{display:flex;align-items:center;gap:12px}
 .timer{font-size:20px;font-weight:600;letter-spacing:-.01em}
 .timer.run{color:var(--red)}
@@ -98,7 +97,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .tbtn .c{font-weight:500;color:var(--pencil)}
 
 .coach{margin:14px 0 0;padding:14px 16px;border-radius:14px;background:var(--paper-2);display:flex;flex-direction:column;gap:10px}
-.coach .step{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--red)}
+.coach .step{font-size:13px;font-weight:600;color:var(--red)}
 .coach p{margin:0;font-size:15px;line-height:1.5;color:var(--ink)}
 .coach .row2{display:flex;gap:8px;justify-content:space-between;align-items:center}
 .coach .skip{font-size:13px;color:var(--pencil);text-decoration:underline;text-underline-offset:3px;padding:8px 0}
@@ -114,26 +113,26 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .rules svg{width:44px;height:44px;display:block}
 .rules b{font-weight:600;color:var(--ink)}
 .rules span{font-size:14px;color:var(--ink-2)}
-.rules .new{display:inline-block;margin-left:6px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
-.how h1{margin:6px 0 6px;font:italic 400 40px/1 var(--serif)}
+.rules .new{display:inline-block;margin-left:6px;font-size:12px;font-weight:600;color:var(--red)}
+.how h1{margin:6px 0 6px;font:700 34px/1.05 var(--sans);letter-spacing:-.035em}
 .how .lead{margin:0 0 10px;color:var(--ink-2)}
 .how .demo{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:center;padding:18px 0;border-bottom:1px solid var(--line)}
 .how .demo svg{width:150px;height:150px;display:block}
-.how .demo h3{margin:0 0 4px;font:italic 400 24px/1 var(--serif)}
+.how .demo h3{margin:0 0 4px;font:700 20px/1.1 var(--sans);letter-spacing:-.02em}
 .how .demo p{margin:0;font-size:14px;color:var(--ink-2)}
-.how .demo .no{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--pencil);display:block;margin-bottom:6px}
+.how .demo .no{font-size:13px;font-weight:500;color:var(--pencil);display:block;margin-bottom:6px}
 .how .ctrl{padding:18px 0;color:var(--ink-2);font-size:14px}
 .how .ctrl b{color:var(--ink)}
 
 /* alt sayfa */
 .sheet-bg{position:fixed;inset:0;background:rgba(10,11,13,.38);display:grid;place-items:end center;z-index:20;padding:12px;animation:fade .2s ease}
 .sheet{width:100%;max-width:520px;max-height:calc(100% - 24px);overflow:auto;background:var(--paper);border-radius:20px;padding:22px 22px calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:up .28s cubic-bezier(.2,.8,.2,1)}
-.sheet h3{margin:0;font:italic 400 32px/1 var(--serif)}
+.sheet h3{margin:0;font:700 26px/1.1 var(--sans);letter-spacing:-.03em}
 .sheet p{margin:0;color:var(--ink-2);font-size:14.5px}
 .sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line);align-self:center;margin:-8px 0 2px}
 .stats{display:flex;gap:28px}
 .stats div{display:flex;flex-direction:column;font-size:12px;color:var(--pencil)}
-.stats b{font:italic 400 36px/1 var(--serif);color:var(--ink)}
+.stats b{font:700 30px/1 var(--sans);letter-spacing:-.03em;color:var(--ink)}
 .share{font-size:13px;background:var(--paper-2);border-radius:12px;padding:12px 14px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink-2);user-select:all}
 .acts{display:flex;gap:8px;flex-wrap:wrap}
 .acts .grow{flex:1}
@@ -236,7 +235,7 @@ const store=load();
 function star(cx,cy,r){let p='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;p+=(i?'L':'M')+(cx+rr*Math.cos(a)).toFixed(1)+' '+(cy+rr*Math.sin(a)).toFixed(1)}return p+'Z'}
 const P={
   police:(x,y)=>`<path d="${star(x,y,27)}" style="fill:var(--ink)"/>`,
-  sus:(x,y,l,inn)=>`<g${inn?' opacity=".38"':''}><circle cx="${x}" cy="${y}" r="27" style="fill:var(--paper);stroke:var(--ink);stroke-width:3.5"/><text x="${x}" y="${y+12}" text-anchor="middle" style="font:italic 400 36px var(--serif);fill:var(--ink)">${l}</text>${inn?`<path d="M${x-30} ${y+18} L${x+30} ${y-18}" style="stroke:var(--ink);stroke-width:3.5;stroke-linecap:round"/>`:''}</g>`,
+  sus:(x,y,l,inn)=>`<g${inn?' opacity=".38"':''}><circle cx="${x}" cy="${y}" r="27" style="fill:var(--paper);stroke:var(--ink);stroke-width:3.5"/><text x="${x}" y="${y+12}" text-anchor="middle" style="font:700 32px var(--sans);fill:var(--ink)">${l}</text>${inn?`<path d="M${x-30} ${y+18} L${x+30} ${y-18}" style="stroke:var(--ink);stroke-width:3.5;stroke-linecap:round"/>`:''}</g>`,
   witOk:(x,y,d)=>{const a=Math.atan2(d[0],d[1])*180/Math.PI;return `<g><rect x="${x-28}" y="${y-28}" width="56" height="56" rx="10" style="fill:var(--paper);stroke:var(--ink);stroke-width:3"/><g transform="rotate(${a} ${x} ${y})"><path d="M${x-15} ${y} H${x+15} M${x+5} ${y-10} L${x+16} ${y} L${x+5} ${y+10}" style="fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round"/></g></g>`},
   witNum:(x,y,n)=>`<g><rect x="${x-28}" y="${y-28}" width="56" height="56" rx="10" style="fill:var(--paper);stroke:var(--ink);stroke-width:3;stroke-dasharray:7 5"/><text x="${x}" y="${y+13}" text-anchor="middle" style="font:600 34px var(--sans);fill:var(--ink)">${n}</text></g>`,
   x:(x,y,a)=>`<path class="${a?'draw':''}" style="--len:60;stroke:var(--pencil);stroke-width:5;stroke-linecap:round;fill:none" d="M${x-14} ${y-15} Q${x} ${y-1} ${x+15} ${y+14} M${x+14} ${y-14} Q${x-1} ${y+1} ${x-15} ${y+15}"/>`,
