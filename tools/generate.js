@@ -213,7 +213,13 @@ if(require.main===module){
     return{no:i+1,title:spec.title,...best};
   });
   const out='// Otomatik üretildi: node tools/generate.js\nwindow.KN_CASES = '+JSON.stringify(cases.map(({g,cand,...c})=>c))+';\n';
-  if(!process.env.DRY)fs.writeFileSync(path.join(__dirname,'..','cases.js'),out);
+  if(!process.env.DRY){
+    fs.writeFileSync(path.join(__dirname,'..','cases.js'),out);
+    // tarayıcı eski cases.js'i önbellekten almasın: index.html'deki sürüm etiketini içeriğe göre güncelle
+    const v=require('crypto').createHash('sha1').update(out).digest('hex').slice(0,8);
+    const ip=path.join(__dirname,'..','index.html');
+    fs.writeFileSync(ip,fs.readFileSync(ip,'utf8').replace(/cases\.js\?v=[0-9a-z]+/,'cases.js?v='+v));
+  }
   cases.forEach(c=>console.log(`#${c.no} ${c.title}: ${c.N}x${c.N} K=${c.K} şüpheli=${c.sus.length} aday=${c.cand} tanık=${c.wit.map(w=>w.t==='ok'?'ok':'sayı'+w.n).join(' ')} | tur=${c.g.rounds} varsayım=${c.g.trials}`));
 }
 module.exports={model,constraints,propagate,countSolutions,grade,cheb,dirOf,onRay,lit};
