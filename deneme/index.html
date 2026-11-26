@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>kör nokta · deneme</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#eceee9">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+:root{--paper:#eceee9;--paper-2:#e3e6e0;--ink:#17191c;--ink-2:#3b4046;--pencil:#8a9096;--line:#c7ccc4;--red:#cf3a2b;--red-soft:rgba(207,58,43,.12);--blue:#2f5fb3;--blue-soft:rgba(47,95,179,.16);
+--sans:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 var(--sans);-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+.wrap{max-width:520px;margin:0 auto;padding:18px 16px 48px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.mark{font:700 24px/1 var(--sans);letter-spacing:-.035em}.mark b{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin:0 5px;transform:translateY(-3px)}
+.tag{font-size:13px;color:var(--pencil)}
+.rules{margin:16px 0 0;padding:14px 16px;border-radius:14px;background:var(--paper-2)}
+.rules ol{margin:6px 0 0;padding-left:20px}.rules li{margin:4px 0}.rules p{margin:8px 0 0;font-size:14px;color:var(--ink-2)}
+.rules summary{font-weight:700;cursor:pointer}
+.tabs{display:flex;gap:8px;margin:18px 0 10px}
+.tabs button{flex:1;padding:9px 0;border-radius:10px;border:1.5px solid var(--line);font-weight:600;font-size:14px}
+.tabs button[aria-current=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.tabs button.done::after{content:" ✓"}
+.meta{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 8px}
+.meta h2{margin:0;font:700 22px/1.1 var(--sans);letter-spacing:-.03em}
+.count{font-weight:600}
+svg#b{width:100%;height:auto;display:block;touch-action:manipulation;user-select:none}
+.status{min-height:44px;margin:10px 0 0;font-size:14.5px;color:var(--ink-2)}.status.warn{color:var(--red)}.status.go{color:#2b7a3d}
+.tools{display:flex;gap:8px;margin-top:6px}
+.btn{padding:12px 16px;border-radius:999px;border:1.5px solid var(--line);font-weight:600}
+.btn.ink{background:var(--ink);color:var(--paper);border-color:var(--ink);flex:1}
+.btn:disabled{opacity:.4;cursor:default}
+.help{margin-top:14px;font-size:13px;color:var(--pencil)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span class="mark">kör<b></b>nokta</span><span class="tag">yeni kurallar · deneme</span></div>
+  <details class="rules" open><summary>kurallar</summary>
+    <ol>
+      <li><b>Polis</b> bulunduğu satır ve sütun boyunca görür. Görüşü önüne çıkan ilk kişide durur: şüpheli, kurban ya da başka bir polis.</li>
+      <li>Bu gece tahtada belli sayıda polis vardı, ama nerede durduklarını bilmiyoruz. <b>Katil dışındaki her şüpheliyi en az bir polis gördü.</b></li>
+      <li><b>Katili de kurbanı da hiçbir polis görmedi.</b> Katil kurbanın hemen yanındadır (çapraz dahil).</li>
+    </ol>
+    <p>Polisleri boş karelere yerleştir, katili seç, kontrol et. Her vakanın tek çözümü var; tahmin gerekmez.</p>
+  </details>
+  <div class="tabs" id="tabs"></div>
+  <div class="meta"><h2 id="title"></h2><span class="count" id="count"></span></div>
+  <svg id="b" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="status" id="status"></div>
+  <div class="tools">
+    <button class="btn ink" id="check">kontrol et</button>
+    <button class="btn" id="undo">geri al</button>
+    <button class="btn" id="clear">temizle</button>
+  </div>
+  <p class="help">Boş kareye dokun: polis. Bir daha: × (burada polis yok). Bir daha: sil. Şüpheliye dokun: katil olarak seç.</p>
+</div>
+<script>
+(function(){
+'use strict';
+const CASES=[{"no":1,"N":6,"k":2,"S":[[2,4],[0,5],[5,3],[0,4],[1,0],[3,0]],"V":[2,0],"police":[[1,4],[5,5]],"killer":5},{"no":2,"N":7,"k":3,"S":[[1,1],[6,0],[2,0],[4,4],[1,0],[3,2],[3,4],[6,3],[2,5]],"V":[2,1],"police":[[1,5],[3,3],[4,0]],"killer":4},{"no":3,"N":8,"k":4,"S":[[3,6],[1,6],[3,5],[1,1],[5,0],[2,1],[3,2],[7,7],[3,4],[6,1],[2,2],[4,7]],"V":[3,3],"police":[[1,5],[2,6],[3,1],[5,7]],"killer":8}];
+const NAMES=['ısınma','orta','zor'];
+const L='ABCDEFGHIJKLMNOP',U=100;
+const $=s=>document.querySelector(s);
+const ch=(a,b)=>Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]));
+let store={};try{store=JSON.parse(localStorage.getItem('kn_deneme')||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem('kn_deneme',JSON.stringify(store))}catch(e){}};
+let C,G;
+function open(i){C=CASES[i];G={i,marks:{},pick:null,hist:[],done:false};
+  $('#title').textContent='vaka '+C.no+' · '+NAMES[i]+' · '+C.N+'×'+C.N;
+  renderTabs();setStatus(C.k+' polis var. nerede durduklarını bul.');draw();}
+function renderTabs(){$('#tabs').innerHTML=CASES.map((c,i)=>'<button data-i="'+i+'" aria-current="'+(C&&C===c)+'" class="'+(store[c.no]?'done':'')+'">vaka '+c.no+'</button>').join('')}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b)open(+b.dataset.i)});
+const at=(r,c)=>{if(C.V[0]===r&&C.V[1]===c)return{k:'v'};const i=C.S.findIndex(s=>s[0]===r&&s[1]===c);if(i>=0)return{k:'s',i};return null};
+const police=()=>Object.keys(G.marks).filter(k=>G.marks[k]==='p').map(k=>[Math.floor(k/C.N),k%C.N]);
+// bir polisin her yöne gördüğü ilk kişi ve çizgi sonu
+function sight(p,P){const out=[];const occ=(r,c)=>at(r,c)||P.some(q=>q[0]===r&&q[1]===c);
+  for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){let r=p[0]+dr,c=p[1]+dc;
+    while(r>=0&&c>=0&&r<C.N&&c<C.N&&!occ(r,c)){r+=dr;c+=dc}
+    const inside=r>=0&&c>=0&&r<C.N&&c<C.N;out.push({end:[r,c],hit:inside?(at(r,c)||{k:'p'}):null})}
+  return out}
+function draw(flash){
+  const N=C.N,S=N*U,P=police();let h='';
+  h+='<rect width="'+S+'" height="'+S+'" style="fill:var(--paper)"/>';
+  let g='';for(let i=1;i<N;i++)g+='M'+i*U+' 0V'+S+'M0 '+i*U+'H'+S;h+='<path d="'+g+'" style="stroke:var(--line);stroke-width:2;fill:none"/>';
+  // görüş çizgileri
+  P.forEach(p=>sight(p,P).forEach(s=>{const x1=p[1]*U+50,y1=p[0]*U+50,ex=s.end[1]*U+50,ey=s.end[0]*U+50;
+    const dx=Math.sign(ex-x1),dy=Math.sign(ey-y1),x2=s.hit?ex-dx*30:ex-dx*50,y2=s.hit?ey-dy*30:ey-dy*50;
+    if(Math.abs(x2-x1)+Math.abs(y2-y1)>20)h+='<line x1="'+(x1+dx*30)+'" y1="'+(y1+dy*30)+'" x2="'+x2+'" y2="'+y2+'" style="stroke:var(--blue);stroke-width:5;stroke-linecap:round;opacity:.45"/>'}));
+  if(flash)flash.forEach(([r,c])=>{h+='<rect x="'+(c*U+5)+'" y="'+(r*U+5)+'" width="'+(U-10)+'" height="'+(U-10)+'" rx="12" style="fill:var(--red-soft);stroke:var(--red);stroke-width:4;stroke-dasharray:10 7"/>'});
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const x=c*U+50,y=r*U+50,o=at(r,c),m=G.marks[r*N+c];
+    if(o&&o.k==='v')h+='<circle cx="'+x+'" cy="'+y+'" r="24" style="fill:var(--red)"/>';
+    else if(o&&o.k==='s'){const pk=G.pick===o.i;
+      h+='<path d="M'+x+' '+(y-30)+' L'+(x+30)+' '+(y+24)+' L'+(x-30)+' '+(y+24)+'Z" style="fill:'+(pk?'var(--red)':'var(--paper)')+';stroke:'+(pk?'var(--red)':'var(--ink)')+';stroke-width:4;stroke-linejoin:round"/>';
+      h+='<text x="'+x+'" y="'+(y+16)+'" text-anchor="middle" style="font:700 27px var(--sans);fill:'+(pk?'var(--paper)':'var(--ink)')+'">'+L[o.i]+'</text>'}
+    else if(m==='p')h+='<rect x="'+(x-26)+'" y="'+(y-26)+'" width="52" height="52" rx="6" style="fill:var(--blue)"/>';
+    else if(m==='x')h+='<path d="M'+(x-13)+' '+(y-13)+'L'+(x+13)+' '+(y+13)+'M'+(x+13)+' '+(y-13)+'L'+(x-13)+' '+(y+13)+'" style="stroke:var(--pencil);stroke-width:5;stroke-linecap:round"/>'}
+  h+='<rect x="1.5" y="1.5" width="'+(S-3)+'" height="'+(S-3)+'" rx="6" style="fill:none;stroke:var(--ink);stroke-width:3"/>';
+  const b=$('#b');b.setAttribute('viewBox','-2 -2 '+(S+4)+' '+(S+4));b.innerHTML=h;
+  $('#count').textContent=P.length+' / '+C.k+' polis';
+  $('#undo').disabled=!G.hist.length;
+}
+function setStatus(t,k){const s=$('#status');s.textContent=t;s.className='status'+(k?' '+k:'')}
+const snap=()=>{G.hist.push({marks:{...G.marks},pick:G.pick});if(G.hist.length>200)G.hist.shift()};
+$('#b').addEventListener('click',e=>{if(G.done)return;const b=$('#b'),pt=b.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+  const p=pt.matrixTransform(b.getScreenCTM().inverse()),r=Math.floor(p.y/U),c=Math.floor(p.x/U);
+  if(r<0||c<0||r>=C.N||c>=C.N)return;const o=at(r,c);
+  if(o&&o.k==='v'){setStatus('kurban. katil bunun hemen yanında.');return}
+  snap();
+  if(o&&o.k==='s'){G.pick=G.pick===o.i?null:o.i;setStatus(G.pick==null?'katil seçimi kaldırıldı.':'katil olarak '+L[o.i]+' seçildi.');draw();return}
+  const k=r*C.N+c,m=G.marks[k];if(!m)G.marks[k]='p';else if(m==='p')G.marks[k]='x';else delete G.marks[k];
+  const n=police().length;setStatus(n>C.k?'fazla polis koydun: bu gece '+C.k+' polis var.':n+' / '+C.k+' polis yerleştirildi.',n>C.k?'warn':'');draw()});
+$('#undo').onclick=()=>{const s=G.hist.pop();if(!s)return;G.marks=s.marks;G.pick=s.pick;G.done=false;draw();setStatus('geri alındı.')};
+$('#clear').onclick=()=>{snap();G.marks={};G.pick=null;G.done=false;draw();setStatus('tahta temizlendi.')};
+$('#check').onclick=()=>{
+  const P=police();
+  if(P.length!==C.k){setStatus('bu gece '+C.k+' polis var, sen '+P.length+' tane koydun.','warn');return}
+  const seen=new Set();let seesV=null;
+  P.forEach(p=>sight(p,P).forEach(s=>{if(!s.hit)return;if(s.hit.k==='v')seesV=p;if(s.hit.k==='s')seen.add(s.hit.i)}));
+  if(seesV){setStatus('bir polis kurbanı görüyor. kurbanı kimse görmedi.','warn');draw([seesV,C.V]);return}
+  if(G.pick==null){setStatus('kontrol için katili de seç: şüpheliye dokun.','warn');return}
+  const K=G.pick;
+  if(ch(C.S[K],C.V)!==1){setStatus(L[K]+' kurbanın yanında değil. katil kurbanın hemen yanında olmalı.','warn');draw([C.S[K]]);return}
+  if(seen.has(K)){setStatus('bir polis '+L[K]+' şüphelisini görüyor. katili kimse görmedi.','warn');draw([C.S[K]]);return}
+  const uns=C.S.map((s,i)=>i).filter(i=>i!==K&&!seen.has(i));
+  if(uns.length){setStatus(uns.map(i=>L[i]).join(', ')+' hiçbir polis tarafından görülmüyor. katil dışında herkesi bir polis görmeli.','warn');draw(uns.map(i=>C.S[i]));return}
+  G.done=true;store[C.no]=1;save();renderTabs();draw();setStatus('dosya kapandı. katil '+L[K]+': onu ve kurbanı hiçbir polis görmedi.','go');
+};
+open(0);
+})();
+</script>
+</body>
+</html>
