@@ -1,117 +1,219 @@
-// Kör Nokta vaka üreticisi
+// Kör Nokta vaka üreticisi (v4: bir gecede birden çok cinayet)
 // Kurallar:
-//  1) Polis etrafındaki 8 kareyi görür. Kurban orada olamaz, oradaki şüpheliler masumdur.
-//  2) Gören tanık (ok): katili gördü. Katil okun gösterdiği çizgi üzerindeki şüphelilerden biridir.
-//     Duyan tanık (sayı): çığlığı duydu. Kurban bu tanığa tam o kadar kare uzaktadır (çapraz adım da 1).
-//  3) Katil kurbanın hemen yanındadır. Kurbanın yanında polisin görmediği başka şüpheli yoktur.
-// Çözüm = (kurban karesi, katil). Tek çözüm olmalı ve iki ipucu türü birleştirilmeden bulunamamalı.
-// Kullanım: node tools/generate.js  ->  cases2.js dosyasını yazar
+//  1) Polis etrafındaki 8 kareyi görür. Kurban orada olamaz, orada duran şüpheli masumdur.
+//  2) Her kurbanın yanında polisin görmediği tam bir şüpheli vardır: katili. Her katil tek kişiyi öldürdü.
+//  3) Ok tanığı: okun çizgisinde tam bir katil var.
+//     Sayı tanığı: en yakın kurban tam o kadar kare uzakta (çapraz adım da 1).
+// Kurbanlar boş karelerdedir. Oyuncu bütün kurbanları bulur; katiller kurbanlardan çıkar.
+// Her vaka: tek çözüm, tahmin gerektirmez (aşağıdaki insan-benzeri çözücü bitirebilmeli).
+// Kullanım: node tools/generate.js [tohum]  ->  cases.js
 const fs = require('fs');
 const path = require('path');
 
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const cheb=(a,b)=>Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]));
+const DIRS=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
 const dirOf=(w,v)=>{const dr=v[0]-w[0],dc=v[1]-w[1];if(!dr&&!dc)return null;if(dr&&dc&&Math.abs(dr)!==Math.abs(dc))return null;return[Math.sign(dr),Math.sign(dc)]};
-const key=(p,N)=>p[0]*N+p[1];
-const same=(a,b)=>a[0]===b[0]&&a[1]===b[1];
+const onRay=(w,p)=>{const d=dirOf(w.p,p);return !!d&&d[0]===w.d[0]&&d[1]===w.d[1]};
+const lit=(b,p)=>b.police.some(q=>cheb(p,q)<=1);
 
-function lit(b,p){return b.police.some(q=>cheb(p,q)<=1)}
-function onRay(w,p){const d=dirOf(w.p,p);return !!d&&d[0]===w.d[0]&&d[1]===w.d[1]}
-// strict=false: "kurbanın yanında başka karanlık şüpheli yok" kısmını yok say (ne kadar gerekli, ölçmek için)
-function solutions(b,wits,strict=true){
-  const occ=new Set([...b.police,...b.sus,...b.wit.map(w=>w.p)].map(p=>key(p,b.N)));
+// Tahtanın sabit yapısı: aday kareler ve her adayın tek karanlık komşusu
+function model(b){
+  const N=b.N,occ=new Set([...b.police,...b.sus,...b.wit.map(w=>w.p)].map(p=>p[0]*N+p[1]));
   const dark=b.sus.map((s,i)=>i).filter(i=>!lit(b,b.sus[i]));
-  const out=[];
-  for(let r=0;r<b.N;r++)for(let c=0;c<b.N;c++){
+  const cand=[],owner=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
     const v=[r,c];
-    if(occ.has(key(v,b.N))||lit(b,v))continue;
-    if(!wits.every(w=>w.t!=='sayi'||cheb(w.p,v)===w.n))continue;
+    if(occ.has(r*N+c)||lit(b,v))continue;
     const nb=dark.filter(i=>cheb(b.sus[i],v)===1);
-    if(strict&&nb.length!==1)continue;
-    for(const k of nb){
-      if(wits.every(w=>w.t!=='ok'||onRay(w,b.sus[k])))out.push({v,k});
-    }
+    if(nb.length!==1)continue;
+    cand.push(v);owner.push(nb[0]);
   }
-  return out;
+  return{cand,owner,dark};
 }
 
-function tryCase(rng,spec){
-  const {N,P,S,W}=spec;
-  const cells=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)cells.push([r,c]);
-  for(let i=cells.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]]}
-  const police=cells.slice(0,P),sus=cells.slice(P,P+S);
-  const b={N,police,sus,wit:[]};
-  const dark=sus.filter(s=>!lit(b,s)).length;
-  if(dark<spec.darkMin||dark>spec.darkMax)return null;
-  const c0=solutions(b,[]);
-  if(c0.length<spec.candMin)return null;
-  const sol=c0[Math.floor(rng()*c0.length)];
-  const v=sol.v,k=sus[sol.k];
-  const occ=new Set([...police,...sus,v].map(p=>key(p,N)));
-  const free=cells.filter(p=>!occ.has(key(p,N)));
-  const wit=[];
-  for(let i=0;i<W.length;i++){
-    const t=W[i],last=i===W.length-1;
-    let opts=free.filter(p=>!wit.some(w=>same(w.p,p)));
-    if(t==='ok')opts=opts.filter(p=>dirOf(p,k)&&cheb(p,k)>=2);
-    else opts=opts.filter(p=>{const d=cheb(p,v);return d>=2&&d<=spec.maxNum});
-    for(let x=opts.length-1;x>0;x--){const j=Math.floor(rng()*(x+1));[opts[x],opts[j]]=[opts[j],opts[x]]}
-    let chosen=null;
-    for(const p of opts){
-      const w=t==='ok'?{t,p,d:dirOf(p,k)}:{t,p,n:cheb(p,v)};
-      if(t==='ok'){
-        // ok en az iki karanlık şüpheliyi göstersin: katili tek başına söylemesin
-        const onR=sus.filter(s=>!lit(b,s)&&onRay(w,s)).length;
-        if(onR<(spec.raySus||2))continue;
-      }
-      b.wit=wit.concat([w]);
-      const n=solutions(b,b.wit).length;
-      if(last?n===1:n>1){chosen=w;break}
-    }
-    if(!chosen)return null;
-    wit.push(chosen);
+// Kısıtlar, aday indeksleri üzerinden
+function constraints(b,M){
+  const C=[];const n=M.cand.length;
+  const banned=new Set();
+  for(const w of b.wit)if(w.t==='sayi'){
+    const ring=[];
+    M.cand.forEach((v,i)=>{const d=cheb(v,w.p);if(d<w.n)banned.add(i);else if(d===w.n)ring.push(i)});
+    C.push({t:'ring',cells:ring,w});
   }
+  const groups=b.sus.map((s,si)=>M.cand.map((v,i)=>i).filter(i=>M.owner[i]===si));
+  groups.forEach((g,si)=>{if(g.length>1)C.push({t:'amo',cells:g})});
+  for(const w of b.wit)if(w.t==='ok'){
+    const gs=b.sus.map((s,si)=>si).filter(si=>onRay(w,b.sus[si])).map(si=>groups[si]);
+    C.push({t:'one',groups:gs,w});
+  }
+  C.push({t:'count',cells:M.cand.map((v,i)=>i),k:b.K});
+  return{C,banned,n};
+}
+
+// st: 0 bilinmiyor, 1 kurban, -1 boş. Döner: false çelişki, yoksa değişti mi
+function propagate(S,st){
+  let changed=true,any=false;
+  const set=(i,val)=>{if(st[i]===val)return true;if(st[i]!==0)return false;st[i]=val;changed=true;any=true;return true};
+  while(changed){
+    changed=false;
+    for(const c of S.C){
+      if(c.t==='ring'){
+        if(c.cells.some(i=>st[i]===1))continue;
+        const u=c.cells.filter(i=>st[i]===0);
+        if(!u.length)return false;
+        if(u.length===1&&!set(u[0],1))return false;
+      }else if(c.t==='amo'){
+        const v=c.cells.filter(i=>st[i]===1);
+        if(v.length>1)return false;
+        if(v.length===1)for(const i of c.cells)if(i!==v[0]&&!set(i,-1))return false;
+      }else if(c.t==='one'){
+        const tr=c.groups.filter(g=>g.some(i=>st[i]===1));
+        if(tr.length>1)return false;
+        if(tr.length===1){for(const g of c.groups)if(g!==tr[0])for(const i of g)if(!set(i,-1))return false;continue}
+        const open=c.groups.filter(g=>g.some(i=>st[i]===0));
+        if(!open.length)return false;
+        if(open.length===1){const u=open[0].filter(i=>st[i]===0);if(u.length===1&&!set(u[0],1))return false}
+      }else if(c.t==='count'){
+        const v=c.cells.filter(i=>st[i]===1).length,u=c.cells.filter(i=>st[i]===0);
+        if(v>c.k||v+u.length<c.k)return false;
+        if(v===c.k)for(const i of u)if(!set(i,-1))return false;
+        if(v+u.length===c.k)for(const i of u)if(!set(i,1))return false;
+      }
+    }
+  }
+  return true;
+}
+
+// Çözüm sayısı (en fazla lim)
+function countSolutions(S,st,lim=2){
+  st=st.slice();
+  if(!propagate(S,st))return 0;
+  const i=st.indexOf(0);
+  if(i<0)return 1;
+  let a=0;
+  for(const val of [1,-1]){const s2=st.slice();s2[i]=val;a+=countSolutions(S,s2,lim-a);if(a>=lim)break}
+  return a;
+}
+
+// İnsan-benzeri çözücü: düz çıkarım, takılınca tek adımlık "varsayalım ki" denemesi
+function grade(S){
+  const st=new Array(S.n).fill(0);for(const i of S.banned)st[i]=-1;
+  let rounds=0,trials=0,deepTrials=0;
+  if(!propagate(S,st))return null;
+  while(st.includes(0)){
+    rounds++;
+    let progress=false;
+    for(let i=0;i<S.n&&!progress;i++){
+      if(st[i])continue;
+      for(const val of [1,-1]){
+        const s2=st.slice();s2[i]=val;
+        if(!propagate(S,s2)){st[i]=-val;propagate(S,st);trials++;progress=true;break}
+      }
+    }
+    if(!progress)return null; // tahmin gerektiriyor
+  }
+  return{rounds,trials};
+}
+
+function shuffle(rng,a){for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function tryCase(rng,spec){
+  const {N,P,S:NS,K}=spec;
+  const cells=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)cells.push([r,c]);
+  shuffle(rng,cells);
+  const police=cells.slice(0,P),sus=cells.slice(P,P+NS);
+  const b={N,K,police,sus,wit:[]};
+  // polis birbirini görmesin, ışıklar çok çakışmasın
+  if(police.some((p,i)=>police.some((q,j)=>j>i&&cheb(p,q)<=2)))return null;
+  let M=model(b);
+  // gizli çözüm: K kurban, farklı katiller
+  const idx=shuffle(rng,M.cand.map((v,i)=>i));
+  const vict=[],used=new Set();
+  for(const i of idx){if(vict.length===K)break;if(used.has(M.owner[i]))continue;
+    if(spec.spread&&vict.some(j=>cheb(M.cand[j],M.cand[i])<spec.spread))continue;
+    vict.push(i);used.add(M.owner[i])}
+  if(vict.length<K)return null;
+  const V=vict.map(i=>M.cand[i]),killers=vict.map(i=>M.owner[i]);
+  // kurbanlar kenara yığılmasın
+  const edge=V.filter(v=>v[0]===0||v[1]===0||v[0]===N-1||v[1]===N-1).length;
+  if(edge>Math.floor(K/2))return null;
+  // tanık eklerken modelin adayları değişir (tanık karesi dolu); kurban kareleri ve komşuluk sabit kalır
+  const occ=new Set([...police,...sus,...V].map(p=>p[0]*N+p[1]));
+  const free=shuffle(rng,cells.filter(p=>!occ.has(p[0]*N+p[1])&&!V.some(v=>cheb(v,p)===0)));
+  const proposals=[];
+  for(const p of free){
+    const dn=Math.min(...V.map(v=>cheb(v,p)));
+    if(dn>=2&&dn<=spec.maxNum)proposals.push({t:'sayi',p,n:dn});
+    for(const d of DIRS){
+      const w={t:'ok',p,d};
+      const onR=sus.map((s,si)=>si).filter(si=>onRay(w,sus[si])&&!lit(b,sus[si]));
+      const kOn=onR.filter(si=>killers.includes(si)).length;
+      if(kOn===1&&onR.length>=2&&cheb(p,sus[onR[0]])>=1)proposals.push(w);
+    }
+  }
+  shuffle(rng,proposals);
+  const wit=[];
+  const solCount=ws=>{const bb={...b,wit:ws};const MM=model(bb);
+    // tanık kareleri kurban karesine denk gelmemeli (free zaten engelliyor)
+    const SS=constraints(bb,MM);const st=new Array(SS.n).fill(0);for(const i of SS.banned)st[i]=-1;
+    return countSolutions(SS,st,2)};
+  // açgözlü: çözüm sayısını en çok düşüren tanıkları ekle, tek çözüme inene kadar
+  let cur=Infinity;
+  for(let step=0;step<spec.maxWit;step++){
+    let best=null,bestN=Infinity;
+    for(const w of proposals.slice(0,60)){
+      if(wit.some(x=>cheb(x.p,w.p)===0))continue;
+      if(w.t==='ok'&&wit.filter(x=>x.t==='ok').length>=spec.maxOk)continue;
+      if(w.t==='sayi'&&wit.filter(x=>x.t==='sayi').length>=spec.maxNumW)continue;
+      const n=solCount(wit.concat([w]));
+      if(n>=1&&n<bestN){bestN=n;best=w}
+    }
+    if(!best)return null;
+    wit.push(best);cur=bestN;
+    shuffle(rng,proposals);
+    if(cur===1)break;
+  }
+  if(cur!==1)return null;
+  // gereksiz tanıkları at
+  for(let i=wit.length-1;i>=0;i--){const t=wit.slice(0,i).concat(wit.slice(i+1));if(solCount(t)===1)wit.splice(i,1)}
   b.wit=wit;
-  if(solutions(b,wit).length!==1)return null;
-  // ölçüler
-  const m={};
-  m.needed=wit.filter(w=>solutions(b,wit.filter(x=>x!==w)).length!==1).length;
-  m.noNum=solutions(b,wit.filter(w=>w.t!=='sayi')).length;   // sadece oklarla kaç çözüm
-  m.noOk=solutions(b,wit.filter(w=>w.t!=='ok')).length;      // sadece sayılarla kaç çözüm
-  m.loose=solutions(b,wit,false).length;                     // "başka karanlık şüpheli yok" olmadan
-  if(m.needed<(spec.needMin||W.length))return null;
-  if(W.includes('sayi')&&W.includes('ok')&&(m.noNum<2||m.noOk<2))return null;
-  if(spec.loose&&m.loose<2)return null;
-  return{N,police,sus,wit,victim:v,killer:sol.k,cand0:c0.length,m};
+  const M2=model(b),S2=constraints(b,M2);
+  const g=grade(S2);
+  if(!g)return null;
+  if(!wit.some(w=>w.t==='ok')||!wit.some(w=>w.t==='sayi'))return null;
+  const victims=V,killerIdx=killers;
+  return{N,K,police,sus,wit,victims,killers:killerIdx,g,cand:M2.cand.length-S2.banned.size};
 }
 
 const SPECS=[
-  {title:'çığlık',     N:6,P:2,S:4,W:['ok','sayi'],        darkMin:3,darkMax:3,candMin:6,maxNum:3},
-  {title:'ara sokak',  N:6,P:2,S:5,W:['sayi','ok'],        darkMin:3,darkMax:4,candMin:7,maxNum:3},
-  {title:'kalabalık',  N:7,P:2,S:6,W:['ok','sayi'],        darkMin:4,darkMax:5,candMin:9,maxNum:3,loose:true},
-  {title:'iki göz',    N:7,P:3,S:6,W:['ok','ok','sayi'],   darkMin:4,darkMax:5,candMin:9,maxNum:3,needMin:2},
-  {title:'çarşı',      N:8,P:3,S:8,W:['sayi','ok','sayi'], darkMin:5,darkMax:6,candMin:12,maxNum:4,loose:true,needMin:3},
-  {title:'son sefer',  N:8,P:3,S:9,W:['ok','sayi','sayi'], darkMin:6,darkMax:7,candMin:14,maxNum:4,loose:true,needMin:3},
+  {title:'ilk gece',   N:6,P:2,S:5, K:2,maxNum:3,maxWit:4,maxOk:2,maxNumW:2,spread:2, want:[0,0]},
+  {title:'ara sokak',  N:7,P:2,S:7, K:2,maxNum:3,maxWit:5,maxOk:2,maxNumW:3,spread:2, want:[1,1]},
+  {title:'kalabalık',  N:7,P:3,S:8, K:3,maxNum:3,maxWit:5,maxOk:3,maxNumW:3,spread:2, want:[1,2]},
+  {title:'iki yaka',   N:8,P:3,S:10,K:3,maxNum:4,maxWit:6,maxOk:3,maxNumW:3,spread:2, want:[2,3]},
+  {title:'çarşı',      N:8,P:3,S:11,K:4,maxNum:4,maxWit:7,maxOk:3,maxNumW:4,spread:2, want:[3,4]},
+  {title:'son sefer',  N:9,P:4,S:13,K:4,maxNum:4,maxWit:7,maxOk:4,maxNumW:4,spread:2, want:[4,9]},
 ];
 
 if(require.main===module){
   const seed=+(process.argv[2]||20261125);
   const rng=mulberry32(seed);
   const cases=SPECS.map((spec,i)=>{
-    let best=null;
-    // birkaç aday üret, en "birleştirme isteyen" olanı seç
-    for(let t=0,found=0;t<400000&&found<40;t++){
+    let best=null,found=0;
+    for(let t=0;t<200000&&found<30;t++){
       const c=tryCase(rng,spec);
-      if(!c)continue;found++;
-      const score=Math.min(c.m.noNum,c.m.noOk)*2+c.m.loose+c.cand0*0.1;
+      if(!c)continue;
+      if(c.g.trials<spec.want[0]||c.g.trials>spec.want[1])continue;
+      found++;
+      const score=c.g.trials*3+c.g.rounds+c.cand*0.05-c.wit.length*0.5;
       if(!best||score>best.score)best={...c,score};
     }
     if(!best)throw new Error('üretilemedi: '+spec.title);
     delete best.score;
     return{no:i+1,title:spec.title,...best};
   });
-  const out='// Otomatik üretildi: node tools/generate.js\nwindow.KN_CASES = '+JSON.stringify(cases.map(({m,...c})=>c))+';\n';
-  fs.writeFileSync(path.join(__dirname,'..','cases.js'),out);
-  cases.forEach(c=>console.log(`#${c.no} ${c.title}: ${c.N}x${c.N} şüpheli=${c.sus.length} aday(tanıksız)=${c.cand0} tanık=${c.wit.map(w=>w.t==='ok'?'ok':'sayı '+w.n).join('+')} | sadece ok→${c.m.noNum} sadece sayı→${c.m.noOk} gevşek→${c.m.loose} gerekli=${c.m.needed}`));
+  const out='// Otomatik üretildi: node tools/generate.js\nwindow.KN_CASES = '+JSON.stringify(cases.map(({g,cand,...c})=>c))+';\n';
+  if(!process.env.DRY)fs.writeFileSync(path.join(__dirname,'..','cases.js'),out);
+  cases.forEach(c=>console.log(`#${c.no} ${c.title}: ${c.N}x${c.N} K=${c.K} şüpheli=${c.sus.length} aday=${c.cand} tanık=${c.wit.map(w=>w.t==='ok'?'ok':'sayı'+w.n).join(' ')} | tur=${c.g.rounds} varsayım=${c.g.trials}`));
 }
-module.exports={solutions,lit,cheb,dirOf,onRay};
+module.exports={model,constraints,propagate,countSolutions,grade,cheb,dirOf,onRay,lit};
